@@ -47,10 +47,13 @@ def adjacent(p):
         (x+1, y+1)
         ]
 
-# initialize center to 1
-values = {(0, 0): 1}
-for p in spiral(100000000):
-    s = sum(values.get(x, 0) for x in adjacent(p))
-    print(s)
-    if p not in values:
-        values[p] = s    
+def sum_adjacent():
+    # initialize center to 1
+    values = {(0, 0): 1}
+    for p in spiral(100000000):
+        s = sum(values.get(x, 0) for x in adjacent(p))
+        if p not in values:
+            values[p] = s
+        yield s
+
+print(next(s for s in sum_adjacent() if s > 277678))
