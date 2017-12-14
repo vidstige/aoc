@@ -60,14 +60,17 @@ ex = {
     '1,2,4': '63960835bcdc130f0b66d7ff4f6a5a8e'
 }
 
+def main():
+    for input, expected in ex.items():
+        actual = elf_hash(input)
 
-for input, expected in ex.items():
-    actual = elf_hash(input)
+        if actual == expected:
+            print("ok")
+        else:
+            print("hash({}) should be {}, but was {}".format(input, expected, actual))
 
-    if actual == expected:
-        print("ok")
-    else:
-        print("hash({}) should be {}, but was {}".format(input, expected, actual))
+    print(data)
+    print(elf_hash(data))
 
-print(data)
-print(elf_hash(data))
+if __name__ == "__main__":
+    main()
