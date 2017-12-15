@@ -25,17 +25,20 @@ def step(t, ranges, scanners):
         direction = 1 if (t // (ranges[s]-1)) % 2 == 0 else -1
         scanners[s] += direction
 
-next_initial = None
-def run(ranges, delay=0):
-    global next_initial
-    if delay == 0:
-        # all scanners start at 0
-        scanners = {d: 0 for d in ranges}        
-    else:
-        scanners = next_initial
-
-    next_initial = scanners.copy()
-    step(delay, ranges, next_initial)
+#next_initial = None
+def run(ranges, s0=None, delay=0):
+    #global next_initial
+    #if delay == 0:
+    #    # all scanners start at 0
+    #    scanners = {d: 0 for d in ranges}
+    #else:
+    #    scanners = next_initial
+    #
+    #next_initial = scanners.copy()
+    #step(delay, ranges, next_initial)
+    scanners = s0
+    if scanners is None:
+        scanners = {d: 0 for d in ranges}
 
     t = delay
 
@@ -51,13 +54,17 @@ def run(ranges, delay=0):
 
     return interceptions
 
-def first_free(data):
+def first_free(ranges):
+    scanners = {d: 0 for d in ranges}
     for delay in itertools.count():
-        interceptions = run(data, delay=delay)
+        interceptions = run(ranges, scanners.copy(), delay=delay)
         if len(interceptions) == 0:
             return delay
         if delay % 13 == 0:
             print(' {}'.format(delay), end="\r")
+
+        step(delay, ranges, scanners)
+
     return None
 
 data = parse(ex)
