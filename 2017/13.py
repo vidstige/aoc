@@ -37,8 +37,8 @@ def run(ranges, s0=None, delay=0):
     #next_initial = scanners.copy()
     #step(delay, ranges, next_initial)
     scanners = s0
-    if scanners is None:
-        scanners = {d: 0 for d in ranges}
+    #if scanners is None:
+    #    scanners = {d: 0 for d in ranges}
 
     t = delay
 
@@ -58,21 +58,22 @@ def first_free(ranges):
     scanners = {d: 0 for d in ranges}
     for delay in itertools.count():
         interceptions = run(ranges, scanners.copy(), delay=delay)
-        if len(interceptions) == 0:
+        if not interceptions:
+            print()
             return delay
         if delay % 13 == 0:
-            print(' {}'.format(delay), end="\r")
+            print('\r{}'.format(delay), end="")
 
         step(delay, ranges, scanners)
 
     return None
 
-data = parse(ex)
-print(severity(run(data), data))
-print(first_free(data))
+#data = parse(ex)
+#print(severity(run(data), data))
+#print(first_free(data))
 
 with open('input/13') as f:
     data = parse(f.read())
 
-print(severity(run(data), data))
+#print(severity(run(data), data))
 print(first_free(data))
