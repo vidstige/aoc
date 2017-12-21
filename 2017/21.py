@@ -84,12 +84,6 @@ def iterate(grid, rules):
     s = len(grid) // bs
     print("{} -> {}".format(len(grid), (bs+1)*s))
     enhanced = (enhance(block, rules) for block in chunk(grid, bs))
-    for block in chunk(grid, bs):
-        print(fmt(block))
-        print('becomes')
-        print(fmt(enhance(block, rules)))
-        print('')
-
     return stitch(enhanced, s)
 
 
@@ -107,7 +101,7 @@ def main():
     rules = list(parse_rules(raw_rules))
     grid = PATTERN.splitlines()
 
-    for _ in range(5):
+    for _ in range(18):
         grid = iterate(grid, rules)
         print(fmt(grid))
         print("")
