@@ -17,7 +17,7 @@ def chunk(grid, s):
     n = len(grid) // s
     for y in range(n):
         for x in range(n):
-            yield valid([grid[y+i][x:x+s] for i in range(s)])
+            yield valid([grid[y*s+i][x*s:x*s+s] for i in range(s)])
 
 
 def stitch(blocks, s):
@@ -25,11 +25,12 @@ def stitch(blocks, s):
     n = 0
     for i, block in enumerate(blocks):
         for dy, row in enumerate(block):
-            y = (i % s) * len(block) + dy    
+            y = (i // s) * len(block) + dy
             while len(grid) <= y:
                 grid.append('')
             grid[y] += row
     return valid(grid)
+
 
 def match(block, pattern):
     if len(block) != len(pattern):
@@ -50,10 +51,12 @@ def match(block, pattern):
     for y in range(bs):
         for x in range(bs):
             b = block[y][x]
-            o  &= b == pattern[y][x]
-            h  &= b == pattern[bs-1-y][x]
-            v  &= b == pattern[y][bs-1-x]
-            vh &= b == pattern[bs-1-y][bs-1-x]
+
+            o &= b == pattern[y][x]
+            h &= b == pattern[bs-1-y][x]
+            v &= b == pattern[y][bs-1-x]
+            #vh &= b == pattern[bs-1-y][bs-1-x]
+            vh = False
 
             r090 &= b == pattern[x][y]
             r270 &= b == pattern[x][bs-1-y]
@@ -66,8 +69,6 @@ def enhance(block, rules):
     for pattern, enhanced in rules:
         if match(block, pattern):
             return valid(enhanced)
-    print('-----')
-    print(fmt(block))
     raise ValueError("No match for block")
 
 def block_size(grid, rules):
@@ -83,6 +84,12 @@ def iterate(grid, rules):
     s = len(grid) // bs
     print("{} -> {}".format(len(grid), (bs+1)*s))
     enhanced = (enhance(block, rules) for block in chunk(grid, bs))
+    for block in chunk(grid, bs):
+        print(fmt(block))
+        print('becomes')
+        print(fmt(enhance(block, rules)))
+        print('')
+
     return stitch(enhanced, s)
 
 
@@ -108,6 +115,7 @@ def main():
     s = 0
     for line in grid:
         s += sum(1 for c in line if c == '#')
+
     print(s)
 
 main()
