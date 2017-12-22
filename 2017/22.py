@@ -1,3 +1,7 @@
+INFECTED = 1
+WEAKENED = 2
+FLAGGED = 3
+
 def grid2lines(grid, p=None):
     max_x = max(x for x, y in grid)
     max_y = max(y for x, y in grid)
@@ -14,12 +18,13 @@ def grid2lines(grid, p=None):
         lines.append(' '.join(line))
     return lines
 
+
 def lines2grid(lines):
     grid = {}
     for y, line in enumerate(lines):
         for x, v in enumerate(line):
             if v == '#':
-                grid[(x, y)] = 'infected'
+                grid[(x, y)] = INFECTED
     return grid
 
 def turn_right(dx, dy):
@@ -27,25 +32,28 @@ def turn_right(dx, dy):
 def turn_left(dx, dy):
     return (dy, -dx)
 
-def main(lines):
-    infected = lines2grid(lines)
+def main(lines, bursts):
+    grid = lines2grid(lines)
     mid = len(lines) // 2
     x, y = mid, mid
     dx, dy = 0, -1
 
     count = 0
-    for _ in range(10000):
-        if (x, y) in infected:
-            dx, dy = turn_right(dx, dy)
-        else:
+    for _ in range(bursts):
+        state = grid.get((x, y))
+        if state == None:
             dx, dy = turn_left(dx, dy)
-        
-        if (x, y) in infected:
-            del infected[(x, y)]
-        else:
-            infected[(x, y)] = True
+            grid[(x, y)] = WEAKENED
+        if state == WEAKENED:
+            grid[(x, y)] = INFECTED
             count += 1
-        
+        if state == INFECTED:
+            dx, dy = turn_right(dx, dy)
+            grid[(x, y)] = FLAGGED
+        if state == FLAGGED:
+            dx, dy = -dx, -dy  # reverse
+            del grid[(x, y)]
+
         #print("\n")
         #print('\n'.join(grid2lines(infected, (x,y))))
 
@@ -59,5 +67,5 @@ ex = """..#
 
 with open('input/22') as f:
     lines = f.readlines()
-    main(lines)
+    main(lines, bursts=10000000)
 
