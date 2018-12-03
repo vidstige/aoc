@@ -30,10 +30,17 @@ def main():
     rectangles = list(load())
     sheet = {}
 
+    counter = [0] * len(rectangles)
     for i, r1 in enumerate(rectangles):
-        for r2 in rectangles[i + 1:]:
-            mark(sheet, overlap(r1, r2))
+        for j, r2 in enumerate(rectangles[i + 1:], start=i+1):
+            o = overlap(r1, r2)
+            if o:
+                counter[i] += 1
+                counter[j] += 1
+            mark(sheet, o)
 
+    idx = counter.index(0)
+    print(rectangles[idx])
 
     print(sum(sheet.values()))
 
