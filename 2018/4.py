@@ -34,11 +34,11 @@ def load():
                 yield date, int(hours), int(minutes), i, Event(event)
     
 guard = None
-asleep_since = ('', 0)
+asleep_since = ('', 0, 0)
 total_sleep = defaultdict(int)
 minute_split = defaultdict(lambda: [0] * 60)
 for date, hours, minutes, _, event in sorted(load()):
-    print(date, hours, minutes, event)
+    #print(date, hours, minutes, event)
     if event.guard():
         guard = event.guard()
         
@@ -56,6 +56,14 @@ for date, hours, minutes, _, event in sorted(load()):
             asleep_since = date, hours, minutes
 
 most_sleeping_guard = max(total_sleep, key=total_sleep.get)
-index, value = max(enumerate(minute_split[most_sleeping_guard]), key=operator.itemgetter(1))    
+index, value = max(enumerate(minute_split[most_sleeping_guard]), key=operator.itemgetter(1))
 print(most_sleeping_guard, index)
 print(most_sleeping_guard * index)
+
+best = (None, None, -1)
+for guard in minute_split:
+    index, value = max(enumerate(minute_split[guard]), key=operator.itemgetter(1))
+    if value > best[2]:
+        best = guard, index, value
+
+print(best)
