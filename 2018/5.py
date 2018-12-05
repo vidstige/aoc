@@ -22,4 +22,11 @@ def reduc(polymer):
             break
     return p
 
-print(len(reduc(load())))
+polymer = load()
+print(len(reduc(polymer)))
+
+# part 2
+polymer = load()
+for r in reactions():
+    new = polymer.replace(r[0], '').replace(r[1], '')
+    print(r, len(reduc(new)))
