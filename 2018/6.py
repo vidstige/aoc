@@ -22,11 +22,11 @@ def infinite(p, rectangle):
 
 def rangex(rectangle):
     xmin, _, xmax, _ = rectangle
-    return range(xmin - 300, xmax + 300)
+    return range(xmin, xmax)
 
 def rangey(rectangle):
     _, ymin, _, ymax = rectangle
-    return range(ymin - 300, ymax + 300)
+    return range(ymin, ymax)
 
 def draw(closest, rectangle):
     for y in rangey(rectangle):
@@ -35,6 +35,32 @@ def draw(closest, rectangle):
             print(ascii_lowercase[c] if c is not None else '.', end='')
         print()
 
+def part_one():
+    closest = {}
+    for x in rangex(rectangle):
+        for y in rangey(rectangle):
+            pc = x, y
+            distances = sorted([(manhattan(p, pc), i) for i, p in enumerate(points)])
+            first = distances[0]
+            second = distances[1]
+            #print(pc, distances)
+            # skip tie distances
+            if first[0] < second[0]:
+                closest[pc] = first[1]
+
+    #draw(closest, rectangle)
+
+    counter = defaultdict(int)
+    for c in closest.values():
+        counter[c] += 1
+
+    print(counter)
+    non_infinite = [c for c in counter if not infinite(points[c], rectangle)]
+    #best = max(non_infinite, key=counter.get)
+    #print(best, counter[best])
+    for i in sorted(counter, key=counter.get, reverse=True):
+        print(i, counter[i])
+
 points = load('6')
 rectangle = (
     min(x for x, y in points),
@@ -42,27 +68,12 @@ rectangle = (
     max(x for x, y in points),
     max(y for x, y in points))
 
-closest = {}
+t = 0
 for x in rangex(rectangle):
     for y in rangey(rectangle):
         pc = x, y
-        distances = sorted([(manhattan(p, pc), i) for i, p in enumerate(points)])
-        first = distances[0]
-        second = distances[1]
-        #print(pc, distances)
-        # skip tie distances
-        if first[0] < second[0]:
-            closest[pc] = first[1]
+        total_distance = sum(manhattan(p, pc) for p in points)
+        if total_distance < 10000:
+            t += 1
 
-#draw(closest, rectangle)
-
-counter = defaultdict(int)
-for c in closest.values():
-    counter[c] += 1
-
-print(counter)
-non_infinite = [c for c in counter if not infinite(points[c], rectangle)]
-#best = max(non_infinite, key=counter.get)
-#print(best, counter[best])
-for i in sorted(counter, key=counter.get, reverse=True):
-    print(i, counter[i])
+print(t)
