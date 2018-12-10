@@ -1,0 +1,26 @@
+<html>
+  <body>
+    <input id="slide" type="range" min="1" max="100000" step="1" value="10159" onchange="updateSlider(this.value)">
+    <canvas id="target" width="800" height="600"></canvas>
+    <script>
+      function updateSlider(value) {
+        console.log(value);
+        fetch('/cords/' + value).then(b => b.json()).then(draw);
+      }
+      function draw(cords) {
+        var canvas = document.getElementById("target");
+        var ctx = canvas.getContext('2d');
+        ctx.fill = "black";
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        var size = 25;
+        for (var i = 0; i < cords.length; i++) {
+          var x = cords[i][0];
+          var y = cords[i][1];
+          
+          ctx.fillRect(canvas.width*x - size/2, canvas.height*y - size/2, size, size);
+        }
+      }
+      updateSlider(10159);
+    </script>
+  </body>
+</html>
