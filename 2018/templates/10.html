@@ -1,7 +1,7 @@
 <html>
   <body>
     <input id="slide" type="range" min="1" max="100000" step="1" value="10159" onchange="updateSlider(this.value)">
-    <canvas id="target" width="800" height="600"></canvas>
+    <canvas id="target" width="800" height="300"></canvas>
     <script>
       function updateSlider(value) {
         console.log(value);
@@ -15,7 +15,7 @@
         var size = 25;
         for (var i = 0; i < cords.length; i++) {
           var x = cords[i][0];
-          var y = cords[i][1];
+          var y = 1 - cords[i][1];
           
           ctx.fillRect(canvas.width*x - size/2, canvas.height*y - size/2, size, size);
         }

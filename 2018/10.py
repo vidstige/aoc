@@ -45,7 +45,7 @@ def coordinates(step: int):
     p = [add(p, dp, step) for p, dp in points]
     return jsonify(normalize(p))
 
-import matplotlib.pyplot as plt
-p = [add(p, dp, 10159) for p, dp in points]
-plt.scatter(*zip(*p))
-plt.show()
+#import matplotlib.pyplot as plt
+#p = [add(p, dp, 10159) for p, dp in points]
+#plt.scatter(*zip(*p))
+#plt.show()
