@@ -34,10 +34,20 @@ def pot_numbers(state):
         if c == '#':
             yield i + offset
 
-initial, rules = load('input/12')
-state = 0, initial
-for g in range(20):
-    print(g, state)
-    state = generation(state, rules)
+from tqdm import tqdm
 
-print(sum(pot_numbers(state)))
+def main():
+    initial, rules = load('input/12')
+    state = 0, initial
+    for g in range(300):
+        ##print(g, state)
+        state = generation(state, rules)
+        print(g, sum(pot_numbers(state)))
+    
+    
+#main()
+
+after300 = 57521
+diff = 194
+gens = 50000000000 - 300
+print(after300 + gens*diff)
