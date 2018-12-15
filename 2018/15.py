@@ -59,7 +59,7 @@ def draw(cave: Set[Position], units: List[Unit]) -> None:
             if unit:
                 print(unit.team, end='')
             else:
-                print('#' if p in cave else ' ', end='')
+                print('#' if p in cave else '.', end='')
         print()
 
 def neighbours(p: Position) -> Iterable[Position]:
@@ -75,66 +75,81 @@ def free_neighbours(cave: Set[Position], p: Position) -> Iterable[Position]:
     return (n for n in neighbours(p) if n not in cave)
 
 
-def shortest(blocked: Set[Position], start: Position, destinations: Set[Position]) -> Position:
+def find_reachable(blocked: Set[Position], start: Position, destinations: Set[Position]) -> Iterable[Position]:
     queue = [(n, 0, n) for n in free_neighbours(blocked, start)]
     visited = set()
     while queue:
         p, d, first = queue.pop(0)
         visited.add(p)
         if p in destinations:
-            return first
+            x, y = p
+            yield d, y, x, first
         queue.extend((n, d + 1, first) for n in free_neighbours(blocked, p) if n not in visited)
-    # Not reachable
-    return None
 
 
 def round(cave, units):
     # movement
-    for unit in sorted(units, key=lambda u: rev(u.p)):
-        # unit neighbours
-        un = list(u for u in units if u.p in neighbours(unit.p) and unit.is_enemy(u))
-        # sort by low hp first, reading order second
-        targets = sorted(un, key=lambda u: (u.hp, rev(u.p)))
-        target = targets[0] if targets else None
-        if not target:
+    someone = list(units)
+    alive = set(units)
+    while someone:
+        someone.sort(key=lambda u: rev(u.p))
+        unit = someone.pop(0)
+
+        enemy_neighbours = list(u for u in alive if u.p in neighbours(unit.p) and unit.is_enemy(u))
+        if not enemy_neighbours:
             # move to New Position
-            unit_positions = set(u.p for u in units)
-            blocked = cave | unit_positions
-            enemy_positions = [u.p for u in units if unit.is_enemy(u)]
+            blocked = cave | set(u.p for u in alive)
+            enemy_positions = [u.p for u in alive if unit.is_enemy(u)]
             if not enemy_positions:
+                # remove dead units
+                for dead in set(units) - alive:
+                    units.remove(dead)
                 return False
             destinations = []
             for p in enemy_positions:
                 destinations.extend(n for n in free_neighbours(blocked, p))
-            np = shortest(blocked, unit.p, destinations)
-            if np:
-                unit.p = np
-
-    # atttack
-    for unit in sorted(units, key=lambda u: rev(u.p)):
-        # unit neighbours
-        un = list(u for u in units if u.p in neighbours(unit.p) and unit.is_enemy(u))
+            reachable = list(find_reachable(blocked, unit.p, destinations))
+            if reachable:
+                r = sorted(reachable)
+                unit.p = r[0][-1]
+    
+        # attack
+        # alive unit neighbours
+        targets = list(u for u in alive if u.p in neighbours(unit.p) and unit.is_enemy(u))
         # sort by low hp first, reading order second
-        targets = sorted(un, key=lambda u: (u.hp, rev(u.p)))
+        targets.sort(key=lambda u: (u.hp, rev(u.p)))
         target = targets[0] if targets else None
-
         if target:
             # attack target
             target.hp -= unit.attack_power
-            if target.hp < 0:
-                units.remove(target)
+            if target.hp <= 0:
+                alive.remove(target)
+                # dead units can't take a turn
+                if target in someone:
+                    someone.remove(target)
+
+    # remove dead units
+    for dead in set(units) - alive:
+        units.remove(dead)
 
     return True
 
-def main():
-    cave, units = load('input/15ex0')
+def battle(filename: str):
+    cave, units = load(filename)
     i = 0
-    draw(cave, units)
+    #draw(cave, units)
     while round(cave, units):
         i += 1
-        #draw(cave, units)
 
+    #draw(cave, units)
+    #for unit in units:
+    #    print(unit)
     hp = sum(u.hp for u in units)
-    print(i, hp, i * hp)
+    return i, hp
+
+def main():
+    print(battle('input/15ex0'), (47, 590))
+    print(battle('input/15ex1'), (37, 982))
+    print(battle('input/15ex2'), (46, 859))
 
 main()
