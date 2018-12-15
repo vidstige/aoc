@@ -1,3 +1,4 @@
+from collections import deque
 from typing import Iterable, List, Set, Tuple
 
 Position = Tuple[int, int]
@@ -76,15 +77,15 @@ def free_neighbours(cave: Set[Position], p: Position) -> Iterable[Position]:
 
 
 def find_reachable(blocked: Set[Position], start: Position, destinations: Set[Position]) -> Iterable[Position]:
-    queue = [(n, 0, n) for n in free_neighbours(blocked, start)]
-    visited = set()
+    queue = deque((n, 0, n) for n in free_neighbours(blocked, start))
+    visited = set(start)
     while queue:
-        p, d, first = queue.pop(0)
+        p, d, first = queue.popleft()
         visited.add(p)
         if p in destinations:
             x, y = p
             yield d, y, x, first
-        queue.extend((n, d + 1, first) for n in free_neighbours(blocked, p) if n not in visited)
+        queue.extend((n, d + 1, first) for n in free_neighbours(blocked, p) if n not in visited and n not in [q[0] for q in queue])
 
 
 def round(cave, units):
@@ -137,9 +138,10 @@ def round(cave, units):
 def battle(filename: str):
     cave, units = load(filename)
     i = 0
-    #draw(cave, units)
+    draw(cave, units)
     while round(cave, units):
         i += 1
+        draw(cave, units)
 
     #draw(cave, units)
     #for unit in units:
@@ -148,10 +150,11 @@ def battle(filename: str):
     return i, hp
 
 def main():
-    print(battle('input/15ex0'), (47, 590))
-    print(battle('input/15ex1'), (37, 982))
-    print(battle('input/15ex2'), (46, 859))
-    print(battle('input/15ex3'), (54, 536))
-    print(battle('input/15ex4'), (20, 937))
+    #print(battle('input/15ex0'), (47, 590))
+    #print(battle('input/15ex1'), (37, 982))
+    #print(battle('input/15ex2'), (46, 859))
+    #print(battle('input/15ex3'), (54, 536))
+    #print(battle('input/15ex4'), (20, 937))
+    print(battle('input/15'))
 
 main()
