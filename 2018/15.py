@@ -22,11 +22,12 @@ class Unit(object):
         return self.team != other.team
 
     def __repr__(self) -> str:
-        return '{}({}, {}, {})'.format(
+        return "{}('{}', {}, {}, {})".format(
             type(self).__name__,
             self.team,
             self.p,
-            self.hp
+            self.hp,
+            self.attack_power
         )
 
 def load(filename):
@@ -135,10 +136,8 @@ def round(cave, units):
 
     return True
 
-def battle(filename: str):
-    cave, units = load(filename)
+def battle(cave, units):
     i = 0
-    draw(cave, units)
     while round(cave, units):
         i += 1
         draw(cave, units)
@@ -149,12 +148,29 @@ def battle(filename: str):
     hp = sum(u.hp for u in units)
     return i, hp
 
+def equip(cave, units):
+    from itertools import count
+    from copy import deepcopy
+    original = units
+    elves = len([u for u in units if u.team == 'E'])
+    for ap in count(3):
+        units = deepcopy(original)
+        for unit in units:
+            if unit.team == 'E':
+                unit.attack_power = ap
+        
+        r = battle(cave, units)
+        dead_elves = elves - len([u for u in units if u.team == 'E'])
+        #print(ap, elves, len([u for u in units if u.team == 'E']))
+        if dead_elves <= 0:
+            return r, ap
+
 def main():
     #print(battle('input/15ex0'), (47, 590))
     #print(battle('input/15ex1'), (37, 982))
     #print(battle('input/15ex2'), (46, 859))
     #print(battle('input/15ex3'), (54, 536))
     #print(battle('input/15ex4'), (20, 937))
-    print(battle('input/15'))
+    print(equip(*load('input/15')))
 
 main()
