@@ -151,5 +151,7 @@ def main():
     print(battle('input/15ex0'), (47, 590))
     print(battle('input/15ex1'), (37, 982))
     print(battle('input/15ex2'), (46, 859))
+    print(battle('input/15ex3'), (54, 536))
+    print(battle('input/15ex4'), (20, 937))
 
 main()
