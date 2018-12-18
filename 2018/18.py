@@ -59,14 +59,29 @@ def draw(grid, bounds):
             print(grid.get((x, y), ' '), end='')
         print()
 
-def main():
-    grid = load('input/18')
-    bounds = bounding(grid)
-    for _ in range(10):
-        draw(grid, bounds)
-        grid = minute(grid, bounds)
+def value(grid):
     trees = sum(1 for v in grid.values() if v == '|')
     lumberyards = sum(1 for v in grid.values() if v == '#')
     print(trees, lumberyards, trees * lumberyards)
+
+def main():
+    grid = load('input/18')
+    bounds = bounding(grid)
+
+    n = 1000000000
+    crumbs = [grid]
+    while True:
+        #draw(grid, bounds)
+        grid = minute(grid, bounds)
+        value(grid)
+        if any(g for g in crumbs if g == grid):
+            a = crumbs.index(grid)
+            b = len(crumbs)
+            diff = b - a
+            idx = (n - a) % diff + a
+            value(crumbs[idx])
+            break
+            
+        crumbs.append(grid)
 
 main()
