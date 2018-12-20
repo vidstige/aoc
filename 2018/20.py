@@ -47,10 +47,13 @@ def shortest(grid):
     stack = [((0,0), 0)]
     visited = {}
     high = 0
+    c = 0
     while stack:
         (x, y), distance = stack.pop()
         if distance > high:
             high = distance
+        if distance >= 1000:
+            c += 1
         visited[(x, y)] = 3
         for dx, dy, _ in directions.values():
             nw = x + dx // 2, y + dy // 2
@@ -58,7 +61,7 @@ def shortest(grid):
                 n = x + dx, y + dy
                 if n not in visited:
                     stack.append((n, distance + 1))
-    return high
+    return high, c
 
 
 
