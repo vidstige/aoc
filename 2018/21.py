@@ -51,6 +51,16 @@ def eqrr(registers, a, b, c):
 
 
 Instruction = Tuple[str, int, int, int]
+
+
+def draw(program: List[Instruction], ip: int) -> None:
+    for i, instruction in enumerate(program):
+        opcode, a, b, c = instruction
+        print("{:02} {} {} {} {} {:>12}".format(
+            i, opcode, a, b, c,
+            '<--' if i == ip else ''))
+
+
 class CPU(object):
     instructions = [
         addr, addi,
@@ -79,7 +89,8 @@ class CPU(object):
             self.execute(program[ip])
             ip = self.registers[self.ip]
             ip +=1
-
+            draw(program, ip)
+            input()
 
 def load(filename):
     with open(filename) as f:
@@ -91,12 +102,11 @@ def load(filename):
                 opcode, a, b, c = line.split()
                 yield opcode, int(a), int(b), int(c)
 
-import sys
 def main():
-    program = list(load('input/19'))
-    cpu = CPU(ip=4, registers=[1, 0, 0, 0, 0, 0])
+    program = list(load('input/21'))
+    cpu = CPU(ip=1, registers=[0, 0, 0, 0, 0, 0])
     cpu.run(program)
-    print(cpu.registers, file=sys.stderr)
+    print(cpu.registers)
 
 main()
 
