@@ -42,16 +42,16 @@ def highest(levels):
 
 from collections import defaultdict
 
-#@lru_cache()
+@lru_cache()
 def compute_sat(serial, size=300):
-    sat = {}
+    sat = defaultdict(int)
     for x, y in grid(size + 1, size + 1):
         sat[(x, y)] = \
             cell(serial, (x, y)) + \
-            sat.get((x - 1, y), 0) + \
-            sat.get((x, y - 1), 0) - \
-            sat.get((x - 1, y - 1), 0)
-    return sat
+            sat[(x - 1, y)] + \
+            sat[(x, y - 1)] - \
+            sat[(x - 1, y - 1)]
+    return dict(sat)
 
 def power(serial, x, y, s):
     sat = compute_sat(serial)
@@ -61,7 +61,7 @@ def simple_power(serial, x, y, s):
     return sum(cell(serial, p) for p in grid(s, s, sx=x, sy=y))
 
 def search(serial):
-    for s in reversed(range(1, 300)):
+    for s in tqdm(reversed(range(1, 300)), total=300):
         for x, y in grid(300 - s, 300 - s):
             yield power(serial, x, y, s), x, y, s
 
@@ -97,7 +97,7 @@ def main():
     serial = 1955
     #draw_sat(serial, 20)
 
-    test_sat(serial, n=32)
-    #print(max(search(serial=1955)))
+    #test_sat(serial, n=32)
+    print(max(search(serial=serial)))
 
 main()
