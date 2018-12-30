@@ -12,11 +12,12 @@ def cell(serial, p):
     return hundreds(level) - 5
 
 
-def grid(w, h):
+def grid(w, h, sx=0, sy=0):
     for y in range(w):
         for x in range(h):
-            yield x, y
+            yield sx + x, sy + y
 
+@lru_cache()
 def compute_power_grid(serial, size=300):
     power_grid = {}
     for x, y in grid(size, size):
@@ -29,7 +30,6 @@ def power_levels(levels, power_grid, kernel=3, size=300):
         levels[(x+1, y+1, kernel)] = sum(power_grid[(x+1 + a, y+1 + b)] for a, b in grid(kernel, kernel))
     return levels
 
-
 def highest(levels):
     return max((l, c) for c, l in levels.items())
 
@@ -40,16 +40,64 @@ def highest(levels):
 # 1
 #print(1955, highest(power_levels(1955)))
 
-def search():
-levels = {}
-power_grid = compute_power_grid(serial=1955)
-size = 300
-for kernel in tqdm(range(1, 300 + 1)):
-    left = kernel // 2
-    right = kernel - left
-    for a, b in grid(size - kernel, size - kernel):
-        x, y = a + 1, b + 1
-        print(x, y, kernel)
-    
-#power_levels(levels, power_grid, 3)
-#print(highest(levels))
+from collections import defaultdict
+
+#@lru_cache()
+def compute_sat(serial, size=300):
+    sat = {}
+    for x, y in grid(size + 1, size + 1):
+        sat[(x, y)] = \
+            cell(serial, (x, y)) + \
+            sat.get((x - 1, y), 0) + \
+            sat.get((x, y - 1), 0) - \
+            sat.get((x - 1, y - 1), 0)
+    return sat
+
+def power(serial, x, y, s):
+    sat = compute_sat(serial)
+    return sat[(x + s - 1, y + s - 1)] + sat[(x - 1, y - 1)] - sat[(x + s - 1, y - 1)] - sat[(x - 1, y + s - 1)]
+
+def simple_power(serial, x, y, s):
+    return sum(cell(serial, p) for p in grid(s, s, sx=x, sy=y))
+
+def search(serial):
+    for s in reversed(range(1, 300)):
+        for x, y in grid(300 - s, 300 - s):
+            yield power(serial, x, y, s), x, y, s
+
+def draw(serial, size=300):
+    for y in range(size):
+        for x in range(size):
+            print('{: >4}'.format(cell(serial, (x, y))), end='')
+        print()
+
+def draw_sat(serial, size=300):
+    sat = compute_sat(serial)
+    for y in range(size):
+        for x in range(size):
+            print('{: >4}'.format(sat[(x, y)]), end='')
+        print()
+
+def test_sat(serial, n):
+    import random
+    for _ in range(32):
+        s = random.randint(1, 300)
+        x = random.randint(1, 300 - s)
+        y = random.randint(1, 300 - s)
+        print(x,y,s, end='... ')
+        actual = power(serial, x, y, s)
+        expected = simple_power(serial, x, y, s)
+        if actual != expected:
+            print("{actual} != {expected}".format(actual=actual, expected=expected))
+        else:
+            print("{} ✔".format(actual))
+
+
+def main():
+    serial = 1955
+    #draw_sat(serial, 20)
+
+    test_sat(serial, n=32)
+    #print(max(search(serial=1955)))
+
+main()
