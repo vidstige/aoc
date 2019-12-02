@@ -20,11 +20,20 @@ def run(program):
         ip += 4
 
 
-p = load()
-p[1] = 12
-p[2] = 2
+def search(needle, program):
+    for noun in range(100):
+        for verb in range(100):
+            p = list(program)
+            p[1] = noun
+            p[2] = verb
+            run(p)
+            r = p[0]
+            #print('{}, {} ->{}'.format(noun, verb, r))
+            if r == needle:
+                return noun, verb
+            
+    
+program = load()
 
-#p = parse('1,1,1,4,99,5,6,0,99')
-print(p)
-run(p)
-print(p[0])
+noun, verb = search(19690720, program)
+print(100 * noun + verb)
