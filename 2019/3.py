@@ -20,71 +20,36 @@ DIRECTIONS = {
     'D': (0, 1)
 }
 
-def is_horizontal(direction):
-    return direction in ('L', 'R')
-
-def is_vertical(direction):
-    return direction in ('U', 'D')
-
-def line_segments(wire):
-    """split wires into line segments"""
-    vertical = []
-    horizontal = []
-    x, y = 0, 0
-    for segment in wire:
-        ox, oy = x, y
-        direction, distance = segment
-        dx, dy = DIRECTIONS[direction]
-        x += dx * distance
-        y += dy * distance
-        line = (min(ox, x), min(oy, y), max(ox, x), max(oy, y))
-        if is_horizontal(direction):
-            horizontal.append(line)
-        if is_vertical(direction):
-            vertical.append(line)
-    return horizontal, vertical
-
-
 def manhattan(p):
     x, y = p
     return abs(x) + abs(y)
 
-def intersect(h, v):
-    """intersects a horizontal and vertical line segment"""
-    hx0, hy0, hx1, hy1 = h
-    vx0, vy0, vx1, vy1 = v
-    if hy0 >= vy0 and hy0 <= vy1:
-        if vx0 >= hx0 and vx0 <= hx1:
-            return vx0, hy0
 
-    return False
+def walk(wire):
+    grid = {}
+    x, y = 0, 0
+    steps = 0
+    for direction, distance in wire:
+        dx, dy = DIRECTIONS[direction]
+        for _ in range(distance):
+            if (x, y) not in grid:
+                grid[(x, y)] = steps
+            steps += 1
+            x, y = x + dx, y + dy
+    return grid
 
-def intersections_vh(a, b):
-    has, vas = a
-    hbs, vbs = b
-    for ha in has:
-        for vb in vbs:
-            interection = intersect(ha, vb)
-            if interection:
-                yield interection
-
-    for va in vas:
-        for hb in hbs:
-            interection = intersect(hb, va)
-            if interection:
-                yield interection
-
-        
 def intersections(wires):
     a, b = wires
-    lsa = line_segments(a)
-    lsb = line_segments(b)
-    
-    return list(intersections_vh(lsa, lsb))
+    ga = walk(a)
+    gb = walk(b)
+    intersections = set(ga.keys()).intersection(set(gb.keys()))
+    intersections.remove((0, 0))
+    return zip([ga[i] for i in intersections], [gb[i] for i in intersections])
 
 def closest_intersection(data):
-    origo = (0, 0)
-    return min(manhattan(p) for p in intersections(parse(data)) if p != origo)
+    #origo = (0, 0)
+    return min(sum(p) for p in intersections(parse(data)))
+    #return intersections(parse(data))
 
 print(closest_intersection(ex1))
 print(closest_intersection(ex2))
