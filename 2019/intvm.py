@@ -12,6 +12,7 @@ def run(program, data=None):
     ip = 0
     out = []
     while True:
+        print(ip)
         opcode = program[ip] % 100
         pm = program[ip] // 100
         ip += 1
@@ -44,6 +45,32 @@ def run(program, data=None):
             print("write ", program[source], modes)
             out.append(program[source])
             ip += 1
+        elif opcode == 5:
+            condition = parameter(0, ip, program, modes)
+            jump = parameter(1, ip, program, modes)
+            if condition:
+                ip = jump
+            else:
+                ip += 2
+        elif opcode == 6:
+            condition = parameter(0, ip, program, modes)
+            jump = parameter(1, ip, program, modes)
+            if not condition:
+                ip = jump
+            else:
+                ip += 2
+        elif opcode == 7:
+            a = parameter(0, ip, program, modes)
+            b = parameter(1, ip, program, modes)
+            destination = program[ip + 2]
+            program[destination] = 1 if a < b else 0
+            ip += 3
+        elif opcode == 8:
+            a = parameter(0, ip, program, modes)
+            b = parameter(1, ip, program, modes)
+            destination = program[ip + 2]
+            program[destination] = 1 if a == b else 0
+            ip += 3
         elif opcode == 99:
             break
         else:
