@@ -7,15 +7,41 @@ class Intcode:
         self.program = program
         self.ip = 0
         self.data = []
+        self.relative_base = 0
 
     def write(self, data):
         self.data.append(data)
 
+    def _grow(self, address: int) -> int:
+        """Grows memory if needed"""
+        self.program.extend([0] * (address - len(self.program) + 1))
+
+    def _get(self, address: int):
+        self._grow(address)
+        return self.program[address]
+
+    def _write(self, i, modes, values):
+        address = self._get(self.ip + i)
+        mode = modes[i]
+        if mode == 0:
+            self._grow(address)
+            self.program[address] = values
+        elif mode == 2:
+            self._grow(self.relative_base + address)
+            self.program[self.relative_base + address] = values
+        else:
+            raise Exception('Unknown mode: {mode}'.format(mode=mode))
+
     def _parameter(self, i, modes):
-        value = self.program[self.ip + i]
-        if modes[i] == 0:
-            return self.program[value]
-        return value
+        value = self._get(self.ip + i)
+        mode = modes[i]
+        if mode == 0:
+            return self._get(value)
+        if mode == 1:
+            return value
+        if mode == 2:
+            return self._get(self.relative_base + value)
+        raise Exception('Unknown mode: {mode}'.format(mode=mode))
 
     def run(self):
         while True:
@@ -30,18 +56,17 @@ class Intcode:
             if opcode == 1:
                 a = self._parameter(0, modes)
                 b = self._parameter(1, modes)
-                destination = self.program[self.ip + 2]
-                self.program[destination] = a + b
+                self._write(2, modes, a + b)
                 self.ip += 3
             elif opcode == 2:
                 a = self._parameter(0, modes)
                 b = self._parameter(1, modes)
-                destination = self.program[self.ip + 2]
-                self.program[destination] = a * b
+                self._write(2, modes, a * b)
                 self.ip += 3
             elif opcode == 3:
-                destination = self.program[self.ip]
-                self.program[destination] = self.data.pop(0)
+                #destination = self._get(self.ip)
+                value = self.data.pop(0)
+                self._write(0, modes, value)
                 self.ip += 1
             elif opcode == 4:
                 #ource = self.program[self.ip]
@@ -67,15 +92,16 @@ class Intcode:
             elif opcode == 7:
                 a = self._parameter(0, modes)
                 b = self._parameter(1, modes)
-                destination = self.program[self.ip + 2]
-                self.program[destination] = 1 if a < b else 0
+                self._write(2, modes, 1 if a < b else 0)
                 self.ip += 3
             elif opcode == 8:
                 a = self._parameter(0, modes)
                 b = self._parameter(1, modes)
-                destination = self.program[self.ip + 2]
-                self.program[destination] = 1 if a == b else 0
+                self._write(2, modes, 1 if a == b else 0)
                 self.ip += 3
+            elif opcode == 9:
+                self.relative_base += self._parameter(0, modes)
+                self.ip += 1
             elif opcode == 99:
                 break
             else:
@@ -83,6 +109,14 @@ class Intcode:
         # terminated
         self.ip -= 1
         return None
+    
+    def run_total(self):
+        out = []
+        while True:
+            o = self.run()
+            if o is None:
+                return out
+            out.append(o)
 
     def is_terminated(self):
         return self.program[self.ip] % 100 == 99
