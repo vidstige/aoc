@@ -12,5 +12,6 @@ ex2 = [1102,34915192,34915192,7,4,7,99,0]
 ex3 = [104,1125899906842624,99]
 
 vm = Intcode(parse(load()))
-vm.write(1)
+vm.write(2)
 print(vm.run_total())
+
