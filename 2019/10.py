@@ -1,5 +1,6 @@
+from collections import defaultdict
 from itertools import combinations
-from math import gcd
+from math import gcd, atan2
 
 ex1 = """.#..#
 .....
@@ -101,9 +102,42 @@ def visible(astroids):
 
     return max((len([v for v in visibility if a in v]), a) for a in astroids)
 
-print(visible(parse(ex1)))
-print(visible(parse(ex2)))
-print(visible(parse(ex3)))
-print(visible(parse(ex4)))
-print(visible(parse(ex5)))
-print(visible(parse(load())))
+def center_on(astroids, center):
+    cx, cy = center
+    deltas = defaultdict(list)
+    for x, y in astroids:
+        dx, dy = x - cx, y - cy
+        t = gcd(dx, dy)
+        if t > 0:
+            d = (dx // t, dy // t)
+            deltas[d].append(t)
+    for ts in deltas.values():
+        ts.sort(reverse=True)
+    return deltas
+
+def rotation(delta):
+    return atan2(*delta)
+
+def laser(astroids, center):
+    #astroids = parse(ex5)
+    cx, cy = center
+    deltas = center_on(astroids, (cx, cy))
+    i = 0
+    while any(ts for ts in deltas.values()):
+        for d in sorted(deltas, key=rotation, reverse=True):
+            # laser
+            if deltas[d]:
+                t = deltas[d].pop()
+                dx, dy = d
+                print(i+1, cx+dx*t, cy+dy*t)
+                i += 1
+
+#print(visible(parse(ex1)))
+#print(visible(parse(ex2)))
+#print(visible(parse(ex3)))
+#print(visible(parse(ex4)))
+#print(visible(parse(ex5)))
+#print(visible(parse(load())))
+
+laser(parse(load()), (20, 19))
+
