@@ -4,7 +4,7 @@ def load(day):
 
 class Intcode:
     def __init__(self, program):
-        self.program = program
+        self.program = list(program)
         self.ip = 0
         self.data = []
         self.relative_base = 0
