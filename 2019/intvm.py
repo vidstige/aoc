@@ -65,6 +65,9 @@ class Intcode:
                 self.ip += 3
             elif opcode == 3:
                 #destination = self._get(self.ip)
+                if not self.data:
+                    self.ip -=1
+                    return None
                 value = self.data.pop(0)
                 self._write(0, modes, value)
                 self.ip += 1

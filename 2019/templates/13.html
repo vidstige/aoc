@@ -1,0 +1,77 @@
+<html>
+  <head>
+    <script>
+      var interval;
+      var styles = ['white', 'purple', 'blue', 'green', 'black'];
+      var joy = 0;
+      function draw(frame) {
+        //console.log(frame);
+        var canvas = document.getElementById('target');
+        var ctx = canvas.getContext('2d');
+        var s = 16;
+  
+        for (var i = 0; i < frame.tiles.length; i++) {
+          var x = frame.tiles[i][0];
+          var y = frame.tiles[i][1];
+          var tile = frame.tiles[i][2];
+          ctx.fillStyle = styles[tile];
+          ctx.beginPath();
+          ctx.rect(x * s, y * s, s - 1, s - 1);
+          ctx.fill();
+        }
+      }
+      function reset() {
+        var url = '/state';
+        fetch(url, {
+          method: 'DELETE',
+          headers: {'Content-Type': 'application/json'}
+        }).then(function() {
+          interval = setInterval(update, 400);
+        });
+      }
+      function update() {
+        var url = '/state';
+        var data = joy;
+        fetch(url, {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: {'Content-Type': 'application/json'}
+        })
+        .then(function(response) { return response.json(); })
+        .then(function(frame) {
+          if (frame.gameover) {
+            clearInterval(interval);
+          }
+          return frame;
+        })
+        .then(function(frame) {
+          if (frame.score) {
+            document.getElementById('score').innerText = frame.score;
+          }
+          return frame;
+        })
+        .then(draw);
+      }
+      reset();
+      window.onload = function() {
+        canvas = document.getElementById('canvas');
+        document.addEventListener('keyup', function(event) {
+          joy = 0;
+        });
+        document.addEventListener('keydown', function(event) {
+          if (event.key == 'ArrowRight') {
+            joy = 1;
+          }
+          if (event.key == 'ArrowLeft') {
+            joy = -1;
+          }
+        }, false);
+      }
+    </script>
+  </head>
+  <body>
+    <p id="score">0</p>
+    <canvas id="target" width="800" height="600" onkeypress="keypress"></canvas>
+    <button onclick="reset()">reset</button>
+  </body>
+</html>
