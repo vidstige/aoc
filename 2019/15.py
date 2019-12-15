@@ -30,36 +30,39 @@ def coordinate(sequence):
     return sum(DX[d] for d in sequence), sum(DY[d] for d in sequence)
 
 def search(program):
-    stack = ['']
+    stack = [('', program)]
     grid = dict()
+    oxygen = None
     while stack:
-        sequence = stack.pop(0)
+        sequence, p = stack.pop(0)
         c = coordinate(sequence)
-        #draw(grid, X=c)
+        draw(grid, X=c)
+
+        # Update map
+        grid[c] = '.'
+
         # Run sequence
-        vm = Intcode(program)
-        status = None
-        for d in sequence:
+        for d in 'NSWE':
+            ds = sequence + d
+            dc = coordinate(ds)
+
+            if dc in grid:
+                continue
+
+            vm = Intcode(p)
             vm.write(CMD[d])
             status = vm.run()
         
-        if status == 0:
-            #assert c not in grid
-            grid[c] = '#'
-        elif status == 1 or status is None:
-            #assert c not in grid
-            # Update map
-            grid[c] = '.'
-
-            # Take new step
-            for d in 'NSWE':
-                ds = sequence + d
-                if coordinate(ds) not in grid:
-                    stack.append(ds)
-        elif status == 2:
-            print("gold", len(sequence))
-            return "gold"
-        else:
-            print("bad status:", status)
+            if status == 0:
+                grid[dc] = '#'
+            elif status == 1:
+                # Take new step
+                stack.append((ds, vm.program))
+            elif status == 2:
+                oxygen = ds
+                stack.append((ds, vm.program))
+            else:
+                print("bad status:", status)
+    print(len(oxygen))
 
 search(load(day=15))
