@@ -36,7 +36,7 @@ def search(program):
     while stack:
         sequence, p = stack.pop(0)
         c = coordinate(sequence)
-        draw(grid, X=c)
+        #draw(grid, X=c)
 
         # Update map
         grid[c] = '.'
@@ -63,6 +63,28 @@ def search(program):
                 stack.append((ds, vm.program))
             else:
                 print("bad status:", status)
-    print(len(oxygen))
+    return grid, oxygen
 
-search(load(day=15))
+def oxygnize(grid, oxygen):
+    t = 0
+    grid[coordinate(oxygen)] = 'O'
+    
+    while any(v == '.' for v in grid.values()):
+        draw(grid)
+        # find all coordinates with oxygen
+        o = [key for key, value in grid.items() if value == 'O']
+        # spread
+        for c in o:
+            x, y = c
+            for d in 'NSWE':
+                cc = x + DX[d], y + DY[d]
+                if grid[cc] == '.':
+                    grid[cc] = 'O'
+        t += 1
+    print(t)
+
+
+grid, oxygen = search(load(day=15))
+print("distance to oxygen:", len(oxygen))
+draw(grid, X=coordinate(oxygen))
+oxygnize(grid, oxygen)
