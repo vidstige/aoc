@@ -56,6 +56,43 @@ YN......#               VT..#....QG
   #########.###.###.#############  
            B   J   C               
            U   P   P               """
+ex3="""             Z L X W       C                 
+             Z P Q B       K                 
+  ###########.#.#.#.#######.###############  
+  #...#.......#.#.......#.#.......#.#.#...#  
+  ###.#.#.#.#.#.#.#.###.#.#.#######.#.#.###  
+  #.#...#.#.#...#.#.#...#...#...#.#.......#  
+  #.###.#######.###.###.#.###.###.#.#######  
+  #...#.......#.#...#...#.............#...#  
+  #.#########.#######.#.#######.#######.###  
+  #...#.#    F       R I       Z    #.#.#.#  
+  #.###.#    D       E C       H    #.#.#.#  
+  #.#...#                           #...#.#  
+  #.###.#                           #.###.#  
+  #.#....OA                       WB..#.#..ZH
+  #.###.#                           #.#.#.#  
+CJ......#                           #.....#  
+  #######                           #######  
+  #.#....CK                         #......IC
+  #.###.#                           #.###.#  
+  #.....#                           #...#.#  
+  ###.###                           #.#.#.#  
+XF....#.#                         RF..#.#.#  
+  #####.#                           #######  
+  #......CJ                       NM..#...#  
+  ###.#.#                           #.###.#  
+RE....#.#                           #......RF
+  ###.###        X   X       L      #.#.#.#  
+  #.....#        F   Q       P      #.#.#.#  
+  ###.###########.###.#######.#########.###  
+  #.....#...#.....#.......#...#.....#.#...#  
+  #####.#.###.#######.#######.###.###.#.#.#  
+  #.......#.......#.#.#.#.#...#...#...#.#.#  
+  #####.###.#####.#.#.#.#.###.###.#.###.###  
+  #.......#.....#.#...#...............#...#  
+  #############.#.#.###.###################  
+               A O F   N                     
+               A A D   M                     """
 
 def neighbours(p):
     x, y = p
@@ -74,6 +111,23 @@ def neighbours_many(*args):
 
 def single(iterable):
     return next(iter(iterable))
+
+def get_bounds(grid):
+    xmin = min(x for x, _ in grid)
+    xmax = max(x for x, _ in grid)
+    ymin = min(y for _, y in grid)
+    ymax = max(y for _, y in grid)
+    return xmin, xmax, ymin, ymax
+
+def is_outside(p, bounds):
+    x, y = p
+    xmin, xmax, ymin, ymax = bounds
+    return x == xmin + 2 or x == xmax - 2 or y == ymin + 2 or y == ymax - 2
+
+DELTAS = {
+    (True, False): -1,
+    (False, True): 1,
+}
 
 def parse(data):
     grid = {}
@@ -99,14 +153,21 @@ def parse(data):
     end = single(n for n in neighbours_many(*zz) if grid.get(n) == '.')
 
     edges = defaultdict(set)
+    bounds = get_bounds(grid)
     # add portal edges
     for portal, sides in portals.items():
         if len(sides) == 2:
             blue, red = sides
             b = single(n for n in neighbours_many(*blue) if grid.get(n) == '.')
             r = single(n for n in neighbours_many(*red) if grid.get(n) == '.')
-            edges[b].add(r)
-            edges[r].add(b)
+
+            tmp = is_outside(b, bounds), is_outside(r, bounds)
+            if tmp not in DELTAS:
+                print(portal)
+            delta = DELTAS[tmp]
+    
+            edges[b].add((r, delta))
+            edges[r].add((b, -delta))
         else:
             assert len(sides) == 1, "{}: {}".format(portal, len(sides))
 
@@ -115,22 +176,35 @@ def parse(data):
         if v == '.':
             for n in neighbours(p):
                 if grid.get(n) == '.':
-                    edges[p].add(n)
-                    edges[n].add(p)
+                    edges[p].add((n, 0))
+                    edges[n].add((p, 0))
 
     return edges, start, end
 
 def search(edges, start, end):
-    queue = [(start, 0)]
+    def by_level(node):
+        return node[1]
+
+    queue = [(start, 0, 0)]
     visited = set()
     while queue:
-        p, steps = queue.pop(0)
-        visited.add(p)
-        if p == end:
+        lvls = [q[1] for q in queue]
+        #print(lvls)
+
+        p, level, steps = queue.pop(0)
+        if (p, level) in visited:
+            continue
+        visited.add((p, level))        
+        #print(p, level)
+        if p == end and level == 0:
             return steps
-        for n in edges[p]:
-            if n not in visited:
-                queue.append((n, steps + 1))
+        queue.sort(key=by_level)
+        for n, level_delta in edges[p]:
+            #if (n, level) not in visited:
+            # can't go out of outermost level
+            if level + level_delta >= 0:
+                queue.append((n, level + level_delta, steps + 1))
+
     return None
 
 def solve(data, expected):
@@ -141,6 +215,7 @@ def load():
     with open('input/20') as f:
         return f.read()
     
-solve(ex1, 23)
-solve(ex2, 58)
+#solve(ex1, 26)
+#solve(ex2, 58)
+solve(ex3, 396)
 solve(load(), None)
