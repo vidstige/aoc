@@ -1,5 +1,14 @@
 from intvm import Intcode, load
-    
+
+
+# ABC
+##.#.##
+
+# A! AND B AND !C
+
+#@ABCDEFGHI
+####.#.##.#.####
+
 #   J
 #####...#########
 
@@ -8,14 +17,28 @@ from intvm import Intcode, load
 
 vm = Intcode(program=load(day=21))
 
-# A AND !(!C AND D)
+# ABCDEFGHI
+#@   @   @
+
+# Jump if any space (unless !A AND B AND !C) and double landing spaces ok
+# !(A AND AND B C OR) AND D AND (H OR E)
+
+#ABCDEFGHI
+#.#.##.#.####
+
 program = """
-NOT C T
-AND D T
 NOT T T
 AND A T
+AND B T
+AND C T
 NOT T J
-WALK
+AND D J
+NOT A T
+AND A T
+OR H T
+OR E T
+AND T J
+RUN
 """
 
 vm.write_ascii(program.lstrip())
