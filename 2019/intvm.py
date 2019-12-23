@@ -12,6 +12,9 @@ class Intcode:
     def write(self, data):
         self.data.append(data)
 
+    def write_ascii(self, text):
+        self.data.extend([ord(c) for c in text])
+
     def _grow(self, address: int) -> int:
         """Grows memory if needed"""
         self.program.extend([0] * (address - len(self.program) + 1))
