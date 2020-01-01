@@ -1,0 +1,144 @@
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css?family=Orbitron&display=swap" rel="stylesheet">
+    <style>
+      body {
+        background-color: #222;
+        color: darkturquoise;
+        font-family: 'Orbitron', sans-serif;
+        font-size: x-large;
+      }
+      #terminal {
+        overflow: auto;
+        max-height: 90vh;
+      }
+      #navigation {
+
+      }
+      #map {
+        background-color: #333;
+      }
+      #pane {
+        width: 256px;
+        float: right;
+        border: 1px solid darkturquoise;
+      }
+      button {
+        background-color: #222; /* Green */
+        border: 1px solid darkturquoise;
+        color: darkturquoise;
+        padding: 8px 4px;
+        margin: 4px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="pane">
+      <canvas id="map" width="256" height="256"></canvas>
+      <div id="inventory"></div>
+      <div id="state"></div>  
+    </div>
+    <div id="navigation"></div>
+    <div id="items"></div>
+    <div id="terminal"></div>
+
+    <script>
+      var nav = null;
+      function removeElement(text) {
+        var elem = document.getElementById(id);
+        return elem.parentNode.removeChild(elem);
+      }
+      function game(action, data) {
+        return fetch('/' + action, {
+          method: data === undefined ? 'GET' : 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)}).then(function(response) {
+            return response.json();
+          });
+      }
+      function update(element, items, tag, callback) {
+        if (items == null) {
+          return;
+        }
+        while (element.firstChild) {
+          element.removeChild(element.firstChild);
+        }
+        for (var i = 0; i < items.length; i++) {
+          const el = document.createElement(tag);
+          el.innerText = items[i];
+          if (callback) {
+            el.onclick = function() { callback(el.innerText); };
+          }
+          element.appendChild(el);
+        }
+      }
+      function navigate(to) {
+        console.log(to);
+        game('go', to).then(updateUI);
+      }
+      function take(item) {
+        console.log(item);
+        game('take', item).then(updateUI);
+      }
+      function drop(item) {
+        game('drop', item).then(updateUI);
+      }
+      function updateMap(map) {
+        const canvas = document.getElementById('map');
+        var ctx = canvas.getContext("2d");
+        var styles = {
+          'visited': 'darkgray',
+          'seen': '#555'
+        }
+        const s = 16;
+        for (var i = 0; i < map.rooms.length; i++) {
+          const room = map.rooms[i];
+          ctx.fillStyle = styles[room.value];
+          ctx.fillRect(room.x * s, room.y * s, s, s);
+        }
+        ctx.fillStyle = "darkturquoise";
+        ctx.fillRect(map.position.x * s, map.position.y * s, s, s);
+      }
+      function updateUI(state) {
+        console.log(state);
+        const terminal = document.getElementById("terminal");
+        if (state.header) {
+          terminal.innerText += state.header + "\n";
+        }
+        if (state.description) {
+          terminal.innerText += state.description + "\n";
+        }
+        terminal.scrollTop = terminal.scrollHeight;
+        const navigation = document.getElementById("navigation");
+        update(navigation, state.navigation, "BUTTON", navigate);
+        const items = document.getElementById("items");
+        update(items, state.items, "BUTTON", take);
+        const inventory = document.getElementById("inventory");
+        update(inventory, state.inventory, "button", drop);
+        updateMap(state.map);
+        if (state.navigation !== null) {
+          nav = state.navigation;
+        }
+      }
+      game('game').then(updateUI);
+      document.addEventListener('keydown', function(event) {
+        var KEYS = {
+          ArrowRight: 'east',
+          ArrowLeft: 'west',
+          ArrowUp: 'north',
+          ArrowDown: 'south'
+        }
+        const direction = KEYS[event.key];
+        if (nav.includes(direction)) {
+          navigate(direction);
+        }
+        if (event.key == ' ') {
+        }
+      }, false);
+    </script>
+  </body>
+</html>

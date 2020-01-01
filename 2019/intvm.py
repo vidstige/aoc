@@ -14,6 +14,10 @@ class Intcode:
 
     def write_ascii(self, text):
         self.data.extend([ord(c) for c in text])
+    
+    def read_ascii(self):
+        output = self.run_total()
+        return bytes(output).decode()
 
     def _grow(self, address: int) -> int:
         """Grows memory if needed"""
@@ -126,3 +130,15 @@ class Intcode:
 
     def is_terminated(self):
         return self.program[self.ip] % 100 == 99
+
+class Terminal:
+    def __init__(self, intcode: Intcode):
+        self.intcode = intcode
+
+    def run(self):
+        while not self.intcode.is_terminated():
+            s = bytes(self.intcode.run_total()).decode('utf-8')
+            print(s)
+            data = input()
+            self.intcode.write_ascii(data)
+            self.intcode.write(10)
