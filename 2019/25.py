@@ -1,6 +1,12 @@
 from flask import Flask, render_template, jsonify, request
 from intvm import Intcode, load, Terminal
 
+# Everything except. Also leave space shuttle, gigantic magnet and photons
+# - asterisk
+# - cake
+# - food ration
+# - sand
+
 DIRECTIONS = {
     'north': (0, -1),
     'south': (0, 1),
