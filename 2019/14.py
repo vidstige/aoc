@@ -70,12 +70,11 @@ def parse(data):
         costs[c].append((q, consumed))
     return dict(costs)
 
-
 def add(a, b, x):
     la = {name: quantity for quantity, name in a}
     lb = {name: quantity for quantity, name in b}
     keys = list(set(la.keys()).union(set(lb.keys())))
-    return [(x*(la.get(key, 0) + lb.get(key, 0)), key) for key in keys]
+    return [(la.get(key, 0) + lb.get(key, 0) * x, key) for key in keys]
 
 def remove(a, b):
     la = {name: quantity for quantity, name in a}
@@ -90,6 +89,7 @@ def solution(node, have):
     return None
 
 def search(costs, need, have):
+    #print('---------')
     queue = [need]
     while queue:
         node = queue.pop()
@@ -98,15 +98,11 @@ def search(costs, need, have):
         if s:
             return s
         for node_quantity, name in node:
-            if node_quantity > 0:
-                if name not in have:
-                    for quantity, ingredients in costs[name]:
-                        #1000 fuel node_quantity, 100 quantity
-                        x = 1 #(node_quantity + quantity - 1) // quantity
-                        #print(node_quantity, quantity, x)
-                        
-                        new = remove(add(ingredients, node, x), [(x * quantity, name)])
-                        queue.append(new)
+            if node_quantity > 0 and name not in have:
+                for quantity, ingredients in costs[name]:
+                    x = 1
+                    new = remove(add(ingredients, node, x), [(x * quantity, name)])
+                    queue.append(new)
 
 print(search(parse(ex1), need=[(1, 'FUEL')], have=['ORE']))
 print(search(parse(ex2), need=[(1, 'FUEL')], have=['ORE']))

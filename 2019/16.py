@@ -20,7 +20,14 @@ def fft(signal, phases, first=8):
         signal = phase(signal)
     return signal[:first]
 
-print(fft('80871224585914546619083218645595', phases=100))
-print(fft('19617804207202209144916044189917', phases=100))
-print(fft('69317163492948606335995924319873', phases=100))
-print(fft(load(), phases=100))
+def debug(signal):
+    for i, _ in enumerate(signal):
+        for j, s in enumerate(signal):
+            print(str(pattern(j, i)).rjust(2), end=' ')
+        print()
+    
+debug([1] * 32)
+#print(fft('80871224585914546619083218645595', phases=100))
+#print(fft('19617804207202209144916044189917', phases=100))
+#print(fft('69317163492948606335995924319873', phases=100))
+#print(fft(load(), phases=100))
