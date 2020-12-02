@@ -10,9 +10,18 @@ fn parse_range(range: &str) -> Range<usize> {
     Range{start: start, end: end + 1}
 }
 
+fn xor(a: bool, b: bool) -> bool {
+    (a || b ) && !(a && b)
+}
+
 fn validate_policy(password: &str, character: &str, range: Range<usize>) -> bool {
-    let n = password.matches(character).count();
-    return range.contains(&n);
+    let first = range.start..(range.start + 1);
+    let second = (range.end-1)..range.end;
+    println!("{} {}", &password[first.clone()], &password[second.clone()]);
+    return xor(&password[first] == character, &password[second] == character);
+
+    //let n = password.matches(character).count();
+    //return range.contains(&n);
 }
 
 fn main() {
@@ -26,7 +35,9 @@ fn main() {
         let range = parse_range(policy_parts.next().unwrap());
         let character = policy_parts.next().unwrap();
         let password: &str = parts.next().unwrap();
-        if validate_policy(password, character, range) {
+        let valid = validate_policy(password, character, range);
+        println!("{}: {}", line, valid);
+        if valid {
             n += 1;
         }
     }
