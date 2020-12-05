@@ -1,4 +1,6 @@
 use std::io::{self, BufRead};
+use std::collections::HashSet;
+
 
 fn partition(boarding: &str) -> (i32, i32) {
     let mut row = 0..128;
@@ -32,12 +34,26 @@ fn main() {
         .lines()
         .map(|line| line.unwrap()).collect();
     
-    let mut seat_ids: Vec<i32> = Vec::new();
+    //let mut seat_ids: Vec<i32> = Vec::new();
+    let mut positions: HashSet<(i32, i32)> = HashSet::new();
     for boarding_pass in boarding_passes {
         let position = partition(&boarding_pass);
-        seat_ids.push(seat_id(position));
+        positions.insert(position);
     }
-    println!("{}", seat_ids.iter().max().unwrap());
+
+    for r in 0..128 {
+        for c in 0..8 {
+            let position = (r, c);
+            if positions.contains(&position) {
+                print!("{}\t", seat_id(position));
+            } else {
+                print!("\t");
+            }
+        }
+        println!();
+    }
+    
+    //println!("{}", seat_ids.iter().max().unwrap());
     //let (r, c) = partition("BFFFBBFRRR");
     //println!("{} {}", r, c);
 }
