@@ -1,13 +1,33 @@
 use std::io::{self, BufRead};
 use std::str::FromStr;
+use std::ops::{Add, Mul};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
-enum CardinalDirection {N, S, E, W}
-enum RelativeDirection {Left, Right}
+struct Vector(i32, i32);
+
+impl Add for Vector {
+    type Output = Self;
+    fn add(self, other: Self) -> Self::Output {
+        Self(self.0 + other.0, self.1 + other.1)
+    }
+}
+impl Mul<i32> for Vector {
+    type Output = Self;
+    fn mul(self, other: i32) -> Self::Output {
+        Self(self.0 * other, self.1 * other)
+    }
+}
+
+const NORTH: Vector = Vector(0, -1);
+const EAST: Vector = Vector(1, 0);
+const SOUTH: Vector = Vector(0, 1);
+const WEST: Vector = Vector(-1, 0);
+
+type Rotation = i32;
 
 enum Instruction {
-    Move(CardinalDirection, i32),
-    Turn(RelativeDirection, i32),
+    MoveWaypoint(Vector),
+    RotateWaypoint(Rotation),
     Forward(i32)
 }
 
@@ -18,75 +38,47 @@ impl FromStr for Instruction {
         let value_str: String = input.chars().skip(1).collect();
         let value: i32 = value_str.parse().unwrap();
         match movement_str.as_str() {
-            "N" => Ok(Instruction::Move(CardinalDirection::N, value)),
-            "S" => Ok(Instruction::Move(CardinalDirection::S, value)),
-            "E" => Ok(Instruction::Move(CardinalDirection::E, value)),
-            "W" => Ok(Instruction::Move(CardinalDirection::W, value)),
-            "L" => Ok(Instruction::Turn(RelativeDirection::Left, value / 90)),
-            "R" => Ok(Instruction::Turn(RelativeDirection::Right, value / 90)),
+            "N" => Ok(Instruction::MoveWaypoint(NORTH * value)),
+            "E" => Ok(Instruction::MoveWaypoint(EAST * value)),
+            "S" => Ok(Instruction::MoveWaypoint(SOUTH * value)),
+            "W" => Ok(Instruction::MoveWaypoint(WEST * value)),
+            "L" => Ok(Instruction::RotateWaypoint(value / 90)),
+            "R" => Ok(Instruction::RotateWaypoint(-value / 90)),
             "F" => Ok(Instruction::Forward(value)),
             _ => Err(())
         }
     }
 }
 
-use std::ops::Add;
-
-#[derive(Debug, PartialEq, Copy, Clone)]
-struct Vector(i32, i32);
-
-impl Add for Vector {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self::Output {
-        Self(self.0 + other.0, self.1 + other.1)
-    }
+struct Ship {
+    position: Vector,
+    waypoint: Vector,
 }
 
-fn delta(direction: CardinalDirection, distance: i32) -> Vector {
-    match direction {
-        CardinalDirection::N => Vector(0, -distance),
-        CardinalDirection::S => Vector(0, distance),
-        CardinalDirection::W => Vector(-distance, 0),
-        CardinalDirection::E => Vector(distance, 0),
+fn rotate(vector: Vector, r: Rotation) -> Vector {
+    let mut v = vector;
+    let rr = ((r % 4) + 4) % 4;
+    for _ in 0..rr {
+        v = Vector(v.1, -v.0)  // rotate left
     }
+    v
 }
-
-fn turn(direction: CardinalDirection, rd: &RelativeDirection) -> CardinalDirection {
-    match rd {
-        RelativeDirection::Left => match direction {
-            CardinalDirection::N => CardinalDirection::W,
-            CardinalDirection::W => CardinalDirection::S,
-            CardinalDirection::S => CardinalDirection::E,
-            CardinalDirection::E => CardinalDirection::N,
-        }
-        RelativeDirection::Right => match direction {
-            CardinalDirection::N => CardinalDirection::E,
-            CardinalDirection::E => CardinalDirection::S,
-            CardinalDirection::S => CardinalDirection::W,
-            CardinalDirection::W => CardinalDirection::N,
-        }
-    }
-}
-
-fn turn_n(direction: CardinalDirection, rd: &RelativeDirection, turns: i32) -> CardinalDirection {
-    let mut d = direction;
-    for _ in 0..turns {
-        d = turn(d, rd);
-    }
-    d
-}
-
-type Ship = (Vector, CardinalDirection);
 
 fn update(ship: Ship, instruction: Instruction) -> Ship {
-    let (position, ship_direction) = ship;
     match instruction {
-        Instruction::Move(move_direction, distance) => 
-            (position + delta(move_direction, distance), ship_direction),
-        Instruction::Turn(rd, turns) =>
-            (position, turn_n(ship_direction, &rd, turns)),
-        Instruction::Forward(distance) => (position + delta(ship_direction, distance), ship_direction),
+        Instruction::MoveWaypoint(waypoint_delta) => Ship{
+            position: ship.position,
+            waypoint: ship.waypoint + waypoint_delta},
+        Instruction::RotateWaypoint(rotation) => Ship{
+            position: ship.position,
+            waypoint: rotate(ship.waypoint, rotation)
+        },
+        Instruction::Forward(amount) => {
+            Ship{
+                position: ship.position + ship.waypoint * amount,
+                waypoint: ship.waypoint,
+            }
+        }
     }
 }
 
@@ -99,13 +91,15 @@ fn main() {
     let lines = stdin.lock().lines();
     let instructions: Vec<Instruction> = lines.map(|line| line.unwrap().parse().unwrap()).collect();
     
-    let mut ship = (Vector(0, 0), CardinalDirection::E);
+    let mut ship = Ship{
+        position: Vector(0, 0),
+        waypoint: Vector(10, -1),
+    };
 
     for instruction in instructions {
         //println!("{}", instruction.value);
         ship = update(ship, instruction);
-        let (position, _) = ship;
-        println!("{}, {}", position.0, position.1);
+        println!("{}, {}", ship.position.0, ship.position.1);
     }
-    println!("{}", manhattan(ship.0))
+    println!("{}", manhattan(ship.position))
 }
