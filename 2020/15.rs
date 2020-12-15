@@ -1,19 +1,26 @@
 use std::io::{self, BufRead};
+use std::collections::HashMap;
 
 fn main() {
     let stdin = io::stdin();
     let lines = stdin.lock().lines();
-    let mut turns: Vec<i32> = lines.map(|line| line.unwrap().parse().unwrap()).collect();
+    let mut turns: HashMap<i32, i32> = HashMap::new();
+    let mut last_spoken: i32 = -1;
+    for (i, say) in lines.map(|line| line.unwrap().parse::<i32>().unwrap()).enumerate() {
+        turns.insert(say, i as i32);
+        last_spoken = say;
+    }
+    turns.remove(&last_spoken);
 
-    for _ in turns.len()..2020 {
-        let last_spoken = *turns.last().unwrap();
-        let turn_said = turns.iter().rev().skip(1).position(|&w| w == last_spoken);
+    for i in turns.len()..30000000 - 1 {
+        let turn_said = turns.get(&last_spoken);
         let say = match turn_said {
-            Some(t) => t as i32 + 1,
+            Some(t) => i as i32 - t,
             None => 0
         };
-        turns.push(say);
+        turns.insert(last_spoken, i as i32);
+        last_spoken = say;
     }
     
-    println!("{}", turns.last().unwrap());
+    println!("{}", last_spoken);
 }
