@@ -2,12 +2,9 @@ import operator
 import sys
 import re
 
-#expr = operand + expr | operand * expr | operand
-# operand = number | ( expr)
-
-OPERATORS = {
-    '+': operator.add, '*': operator.mul
-}
+#  expr -> factor * expr | factor
+#  factor -> term + factor | term
+#  term -> NUMBER | ( expr )
 
 def maybe(f, value):
     try:
@@ -21,37 +18,35 @@ def lex(s):
     # remove empty entries and maybe parse to int
     return [maybe(int, token) for token in tokens if token]
 
-# recursive decent parser subsystem
-def parse_operand(tokens, i):
-    token = tokens[i]
-    if isinstance(token, int):
-        return token, i + 1
-    if tokens[i] == '(':
-        tmp, j = parse_expression(tokens, i + 1)
-        assert tokens[j] == ')'
-        return tmp, j + 1
-    # special hack for left recursion -_-
-    # don't consume anything
-    return None, i
+def parse_term(tokens, i):
+    #print('term', tokens[i])
+    if isinstance(tokens[i], int):
+        return tokens[i], i + 1
+    assert tokens[i] == '('
+    expr, j = parse_expression(tokens, i + 1)
+    assert tokens[j] == ')', tokens[j]
+    return expr, j + 1
+
+def parse_factor(tokens, i):
+    #print('factor', tokens[i])
+    term, j = parse_term(tokens, i)
+    if j == len(tokens):
+        return term, j
+    if tokens[j] == '+':
+        rhs, j = parse_factor(tokens, j + 1)
+        return term + rhs, j
+    return term, j
+
 
 def parse_expression(tokens, i):
-    operand, j = parse_operand(tokens, i)
+    #print('expression', tokens[i])
+    factor, j = parse_factor(tokens, i)
     if j == len(tokens):
-        return operand, j
-    operator = OPERATORS.get(tokens[j])
-    # special hack to handle left recursion -_-
-    while operator:
-        j += 1  # consume operator
-        # try parsing operand
-        maybe_operand, j = parse_operand(tokens, j)
-        if maybe_operand:
-            rhs = maybe_operand
-        else:
-            print('erroids')
-            rhs, j = parse_expression(tokens, j)
-        operand = operator(operand, rhs)
-        operator = OPERATORS.get(tokens[j]) if j < len(tokens) else None
-    return operand, j
+        return factor, j
+    if tokens[j] == '*':
+        rhs, j = parse_expression(tokens, j + 1)
+        return factor * rhs, j
+    return factor, j
 
 def evaluate(line):
     tokens = lex(line)
@@ -59,4 +54,5 @@ def evaluate(line):
     return ast
 
 for line in sys.stdin:
+    #print(line.strip(), '=', evaluate(line))
     print(evaluate(line))
