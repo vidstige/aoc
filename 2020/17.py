@@ -1,22 +1,26 @@
 from itertools import product
 import sys
 
+D = 4
+
 # relative neighbors
-NEIGHBORS = set(product((-1, 0, 1), repeat=3))
-NEIGHBORS.remove((0, 0, 0))
+NEIGHBORS = set(product((-1, 0, 1), repeat=D))
+ORIGO = (0, ) * D
+NEIGHBORS.remove(ORIGO)
 
 def parse(f):
     grid = set()
     for y, line in enumerate(f):
         for x, char in enumerate(line):
             if char == '#':
-                grid.add((x, y, 0))
+                grid.add((x, y, 0, 0))
     return grid
 
+def add(a, b):
+    return tuple(ai + bi for ai, bi in zip(a, b))
+
 def neighbors(p):
-    x, y, z = p
-    for nx, ny, nz in NEIGHBORS:
-        yield x + nx, y + ny, z + nz
+    return [add(p, rn) for rn in NEIGHBORS]
 
 def active(grid, ps):
     return len([1 for p in ps if p in grid])
