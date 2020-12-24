@@ -32,6 +32,58 @@ fn parse(line: String) -> (i32, i32, i32) {
     (x, y, z)
 }
 
+static NEIGHBOURS: &'static [(i32, i32, i32)] = &[
+    (0, -1, 1),
+    (-1, 0, 1),
+    (1, 0, -1),
+    (0, 1, -1),
+    (1, -1, 0),
+    (-1, 1, 0),
+];
+
+fn add((ax, ay, az): &(i32, i32, i32), (bx, by, bz): &(i32, i32, i32)) -> (i32, i32, i32) {
+    (ax + bx, ay + by, az + bz)
+}
+
+fn step(black: &mut HashSet<(i32, i32, i32)>) {
+    let mut everything = HashSet::new();
+    // Find all tiles to consider
+    for tile in black.iter() {
+        everything.insert(*tile);
+        for n in NEIGHBOURS {
+            everything.insert(add(tile, n));
+        }
+    }
+    // Find all to flip
+    let mut flip = HashSet::new();
+    for tile in everything.iter() {
+        let mut count = 0;
+        for n in NEIGHBOURS {
+            if black.contains(&add(tile, n)) {
+                count += 1;
+            }
+        }
+
+        if black.contains(tile) {
+            if count == 0 || count > 2 {
+                flip.insert(*tile);
+            }
+        } else {
+            if count == 2 {
+                flip.insert(*tile) ;
+            }
+        }
+    }
+    for tile in flip.iter() {
+        if black.contains(tile) {
+            black.remove(tile);
+        } else {
+            black.insert(*tile);
+        }
+    }
+}
+
+
 fn main() {
     let stdin = io::stdin();
     let lines = stdin.lock().lines();
@@ -44,7 +96,9 @@ fn main() {
         } else {
             black.insert(p);
         }
-        
+    }
+    for _ in 0..100 {
+        step(&mut black);
     }
     println!("{}", black.len());
 }
