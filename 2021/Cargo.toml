@@ -1,0 +1,9 @@
+[package]
+name = "aoc2021"
+version = "0.1.0"
+authors = ["Samuel Carlsson <samuel.carlsson@gmail.com>"]
+edition = "2018"
+
+[[bin]]
+name = "2"
+path = "2.rs"
