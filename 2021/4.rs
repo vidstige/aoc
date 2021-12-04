@@ -63,13 +63,25 @@ fn main() {
         blank = lines.next();
     }
 
-    'outer: for n in 0..numbers.len() {
+    'winner: for n in 0..numbers.len() {
         let so_far: Vec<u8> = numbers.iter().take(n).map(|n| *n).collect();
         for board in boards.iter() {
             if is_win(board, &so_far) {
                 println!("score: {}", score(board, &so_far));
-                break 'outer;
+                break 'winner;
             }
+        }
+    }
+
+    'loser: for n in 0..numbers.len() {
+        let so_far: Vec<u8> = numbers.iter().take(n).map(|n| *n).collect();
+        let tmp = if is_win(&boards[0], &so_far) { score(&boards[0], &so_far) } else { 0 };
+        // keep only losers
+        boards.retain(|b| !is_win(b, &so_far));
+        // last board just won
+        if boards.is_empty() {
+            println!("score: {}", tmp);
+            break 'loser;
         }
     }
 }
