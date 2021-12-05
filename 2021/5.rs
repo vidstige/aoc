@@ -57,12 +57,22 @@ fn main() {
                 let p = Point{x, y};
                 *intersections.entry(p).or_insert(0) += 1;
             }
-        }
-        if vent.is_horizontal() {
+        } else if vent.is_horizontal() {
             let y = vent.from.y;
             let xmin = cmp::min(vent.from.x, vent.to.x);
             let xmax = cmp::max(vent.from.x, vent.to.x) + 1;
             for x in xmin..xmax {
+                let p = Point{x, y};
+                *intersections.entry(p).or_insert(0) += 1;
+            }
+        } else {
+            // diagonal
+            let n = (vent.from.x - vent.to.x).abs();
+            let dx = (vent.to.x - vent.from.x) / n;
+            let dy = (vent.to.y - vent.from.y) / n;
+            for i in 0..(n + 1) {
+                let x = vent.from.x + dx * i;
+                let y = vent.from.y + dy * i;
                 let p = Point{x, y};
                 *intersections.entry(p).or_insert(0) += 1;
             }
