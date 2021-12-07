@@ -1,7 +1,11 @@
 use std::io::{self, BufRead};
 
-fn cost(crabs: &Vec<i32>, p: i32) -> i32 {
+fn linear_cost(crabs: &Vec<i32>, p: i32) -> i32 {
     crabs.iter().map(|c| c - p).map(i32::abs).sum()
+}
+
+fn cost(crabs: &Vec<i32>, p: i32) -> i32 {
+    crabs.iter().map(|c| c - p).map(|d| d.abs()).map(|d| (d+1) * d / 2).sum()
 }
 
 fn main() {
