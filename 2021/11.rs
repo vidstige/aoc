@@ -68,9 +68,20 @@ fn main() {
         }
     }
 
-    let mut sum = 0;
+    /*let mut sum = 0;
     for _ in 0..100 {
         sum += step(&mut cave);
     }
-    println!("{}", sum);
+    println!("{}", sum);*/
+
+    let mut i = 0;
+    loop {
+        i += 1;
+        let n = step(&mut cave);
+        if n == cave.len() {
+            println!("sync!");
+            break;
+        }
+    }
+    println!("{}", i);
 }
