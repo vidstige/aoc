@@ -1,7 +1,17 @@
 use std::io::{self, BufRead};
 use std::collections::HashMap;
 
-fn parse(stdin: std::io::Stdin) -> (String, HashMap<(char, char), char>) {
+type Polymer = HashMap<(char, char), usize>;
+
+fn pairwise<I>(right: I) -> impl Iterator<Item = (I::Item, I::Item)>
+where
+    I: IntoIterator + Clone,
+{
+    let left = right.clone().into_iter().skip(1);
+    left.zip(right)
+}
+
+fn parse(stdin: std::io::Stdin) -> (Polymer, HashMap<(char, char), char>) {
     let mut lines = stdin.lock()
         .lines()
         .map(|line| line.unwrap());
@@ -18,49 +28,45 @@ fn parse(stdin: std::io::Stdin) -> (String, HashMap<(char, char), char>) {
         let b = from_chars.next().unwrap();
         rules.insert((a, b), to.chars().next().unwrap());
     }
-    (initial, rules)
+    let mut polymer = HashMap::new();
+    for (b, a) in pairwise(initial.chars()) {
+        *polymer.entry((a, b)).or_insert(0) += 1;
+    }
+    (polymer, rules)
 }
 
-fn pairwise<I>(right: I) -> impl Iterator<Item = (I::Item, I::Item)>
-where
-    I: IntoIterator + Clone,
-{
-    let left = right.clone().into_iter().skip(1);
-    left.zip(right)
-}
-
-fn step(polymer: &String, rules: &HashMap<(char, char), char>) -> String {
-    let mut tmp = Vec::new();
-    for (b, a) in pairwise(polymer.chars()) {
-        match rules.get(&(a, b)) {
-            Some(c) => {
-                tmp.push(a);
-                tmp.push(*c);
-            },
-            None => {
-                tmp.push(a);
-            }
+fn step(polymer: &Polymer, rules: &HashMap<(char, char), char>) -> Polymer {
+    let mut deltas = HashMap::new();
+    for (pair, count) in polymer {
+        if let Some(to) = rules.get(pair) {
+            *deltas.entry(*pair).or_insert(0) -= count;
+            let (a, b) = pair;
+            *deltas.entry((*a, *to)).or_insert(0) += count;
+            *deltas.entry((*to, *b)).or_insert(0) += count;
         }
     }
-    tmp.push(polymer.chars().last().unwrap());
-    tmp.iter().collect()
-}
-
-fn frequency(s: &String) -> HashMap<char, usize> {
-    let mut f = HashMap::new();
-    for c in s.chars() {
-        *f.entry(c).or_default() += 1;
+    let mut new = polymer.clone();
+    for (pair, delta) in deltas {
+        *new.entry(pair).or_insert(0) += delta;
     }
-    f
+    new
 }
 
 fn main() {
     let stdin = io::stdin();
     let (initial, rules) = parse(stdin);
     let mut polymer = initial;
-    for _ in 0..10 {
+    for _ in 0..40 {
         polymer = step(&polymer, &rules);
     }
-    let f = frequency(&polymer);
-    println!("{:?}", f.values().max().unwrap() - f.values().min().unwrap());
+    
+    let mut f: HashMap<char, usize> = HashMap::new();
+    for ((a, b), count) in polymer {
+        *f.entry(a).or_insert(0) += count;
+        *f.entry(b).or_insert(0) += count;
+    }
+    let lo = f.values().min().unwrap();
+    let hi = f.values().max().unwrap();
+    let diff = (hi+1) / 2 - (lo+1) / 2;
+    println!("{}", diff);
 }
