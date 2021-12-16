@@ -37,34 +37,50 @@ fn as_bitstream(packet: String) -> BitStream {
     }
 }
 
-fn parse(stream: &mut BitStream) -> u32 {
-    let mut total_version = 0;
-    let version = stream.read_bits(3);
-    total_version += version;
+fn parse(stream: &mut BitStream) -> u64 {
+    let _version = stream.read_bits(3);
     let t = stream.read_bits(3);
     if t == 4 {
         // literal
+        let mut groups = Vec::new();
         while {
             let cont = stream.read_bit();
             let group = stream.read_bits(4);
+            groups.push(group);
             cont.unwrap_or(0) > 0
         } { }
+        let mut value: u64 = 0;
+        for (i, group) in groups.iter().enumerate() {
+            let m = 1 << ((groups.len() - i - 1) * 4);
+            value += m * *group as u64;
+        }
+        return value;
     } else {
         let length_type = stream.read_bit().unwrap();
+        let mut values = Vec::new();
         if length_type == 0 {
             let length = stream.read_bits(15) as usize;
             let before = stream.position;
             while stream.position - before < length {
-                total_version += parse(stream);
+                values.push(parse(stream));
             }
         } else {
             let count = stream.read_bits(11);
             for _ in 0..count {
-                total_version += parse(stream);
+                values.push(parse(stream));
             }
         }
+        return match t {
+            0 => values.iter().sum(),
+            1 => values.iter().product(),
+            2 => *values.iter().min().unwrap(),
+            3 => *values.iter().max().unwrap(),
+            5 => if values[0] > values[1] { 1 } else { 0 },
+            6 => if values[0] < values[1] { 1 } else { 0 },
+            7 => if values[0] == values[1] { 1 } else { 0 }
+            _ => panic!(),
+        }
     }
-    total_version
 }
 
 fn main() {
