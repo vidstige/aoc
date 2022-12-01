@@ -14,6 +14,9 @@ fn main() {
             acc += calories;
         }
     }
-    let top_elf = elfs.iter().max().unwrap();
-    println!("{}", top_elf);
+    elfs.push(acc);
+
+    elfs.sort();
+    elfs.reverse();
+    println!("{} {}", elfs[0], elfs[0..3].iter().sum::<i32>());
 }
