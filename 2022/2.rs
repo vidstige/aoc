@@ -1,48 +1,78 @@
 use std::io::{self, BufRead};
 use std::str::FromStr;
 
-enum RPS {Rock, Paper, Scissors}
+enum Ply {Rock, Paper, Scissors}
+enum Outcome {Win, Draw, Loss}
 
-impl FromStr for RPS {
+impl FromStr for Ply {
     type Err = String;
-    fn from_str(input: &str) -> Result<RPS, Self::Err> {
-        match input {
-            "X"  => Ok(RPS::Rock),
-            "Y"  => Ok(RPS::Paper),
-            "Z"  => Ok(RPS::Scissors),
-            
-            "A"  => Ok(RPS::Rock),
-            "B"  => Ok(RPS::Paper),
-            "C"  => Ok(RPS::Scissors),
+    fn from_str(input: &str) -> Result<Ply, Self::Err> {
+        match input {            
+            "A"  => Ok(Ply::Rock),
+            "B"  => Ok(Ply::Paper),
+            "C"  => Ok(Ply::Scissors),
 
             _ => Err(format!("Unknown ply '{}'", input)),
         }
     }
 }
 
-fn outcome(a: RPS, b: RPS) -> i32 {
+impl FromStr for Outcome {
+    type Err = String;
+    fn from_str(input: &str) -> Result<Outcome, Self::Err> {
+        match input {
+            "X"  => Ok(Outcome::Loss),
+            "Y"  => Ok(Outcome::Draw),
+            "Z"  => Ok(Outcome::Win),
+            
+            _ => Err(format!("Unknown outcome '{}'", input)),
+        }
+    }
+}
+fn outcome(a: &Ply, b: &Ply) -> Outcome {
     match (a, b) {
-        (RPS::Rock, RPS::Rock) => 0,
-        (RPS::Rock, RPS::Paper) => -1,
-        (RPS::Rock, RPS::Scissors) => 1,
+        (Ply::Rock, Ply::Rock) => Outcome::Draw,
+        (Ply::Rock, Ply::Paper) => Outcome::Loss,
+        (Ply::Rock, Ply::Scissors) => Outcome::Win,
 
-        (RPS::Paper, RPS::Rock) => 1,
-        (RPS::Paper, RPS::Paper) => 0,
-        (RPS::Paper, RPS::Scissors) => -1,
+        (Ply::Paper, Ply::Rock) => Outcome::Win,
+        (Ply::Paper, Ply::Paper) => Outcome::Draw,
+        (Ply::Paper, Ply::Scissors) => Outcome::Loss,
 
-        (RPS::Scissors, RPS::Rock) => -1,
-        (RPS::Scissors, RPS::Paper) => 1,
-        (RPS::Scissors, RPS::Scissors) => 0,
+        (Ply::Scissors, Ply::Rock) => Outcome::Loss,
+        (Ply::Scissors, Ply::Paper) => Outcome::Win,
+        (Ply::Scissors, Ply::Scissors) => Outcome::Draw,
     }
 }
 
-fn score(opponent: RPS, you: RPS) -> i32 {
-    let tmp = match you {
-        RPS::Rock => 1,
-        RPS::Paper => 2,
-        RPS::Scissors => 3,
+fn score(opponent: &Ply, you: &Ply) -> i32 {
+    let a = match you {
+        Ply::Rock => 1,
+        Ply::Paper => 2,
+        Ply::Scissors => 3,
     };
-    tmp + (outcome(you, opponent) + 1) * 3
+    let b = match outcome(you, opponent) {
+        Outcome::Win => 6,
+        Outcome::Draw => 3,
+        Outcome::Loss => 0,
+    };
+    a + b
+}
+
+fn find(opponent: &Ply, need: &Outcome) -> Ply {
+    match (opponent, need) {
+        (Ply::Rock, Outcome::Win) => Ply::Paper,
+        (Ply::Rock, Outcome::Draw) => Ply::Rock,
+        (Ply::Rock, Outcome::Loss) => Ply::Scissors,
+
+        (Ply::Paper, Outcome::Win) => Ply::Scissors,
+        (Ply::Paper, Outcome::Draw) => Ply::Paper,
+        (Ply::Paper, Outcome::Loss) => Ply::Rock,
+
+        (Ply::Scissors, Outcome::Win) => Ply::Rock,
+        (Ply::Scissors, Outcome::Draw) => Ply::Scissors,
+        (Ply::Scissors, Outcome::Loss) => Ply::Paper,
+    }
 }
 
 fn main() {
@@ -52,9 +82,10 @@ fn main() {
     let mut sum = 0;
     for line in lines {
         let mut parts = line.split_whitespace();
-        let predicted = parts.next().unwrap().parse().unwrap();
-        let recommendation = parts.next().unwrap().parse().unwrap();
-        sum += score(predicted, recommendation)
+        let opponent = parts.next().unwrap().parse().unwrap();
+        let need = parts.next().unwrap().parse().unwrap();
+        let ply = find(&opponent, &need);
+        sum += score(&opponent, &ply)
     }
     println!("{}", sum);
 }
