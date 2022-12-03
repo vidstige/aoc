@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Samuel Carlsson <samuel.carlsson@gmail.com>"]
 edition = "2018"
 
+[dependencies]
+itertools = "0.10.5"
+
 [[bin]]
 name = "1"
 path = "1.rs"
