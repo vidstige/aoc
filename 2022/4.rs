@@ -16,25 +16,19 @@ fn overlaps(a: &Range<i32>, b: &Range<i32>) -> bool {
     (a.start < b.end) && (a.end > b.start)
 }
 
+fn parse_elf_pair(line: &String) -> (Range<i32>, Range<i32>) {
+    let mut split = line.split(",");
+    let a = parse_assignment(split.next().unwrap());
+    let b = parse_assignment(split.next().unwrap());
+    (a, b)
+}
+
 fn main() {
     let stdin = io::stdin();
     let lines = stdin.lock().lines().map(|line| line.unwrap());
 
-    let mut contained = 0;
-    let mut overlapping = 0;
+    let elf_pairs: Vec<_> = lines.map(|line| parse_elf_pair(&line)).collect();
 
-    for line in lines {
-        let mut split = line.split(",");
-        let a = parse_assignment(split.next().unwrap());
-        let b = parse_assignment(split.next().unwrap());
-        //println!("{} - {}, {} - {}: {}", a.start, a.end - 1, b.start, b.end - 1, overlaps(&a, &b));
-        if contains(&a, &b) {
-            contained += 1;
-        }
-        if overlaps(&a, &b) {
-            overlapping += 1;
-        }
-    }
-    println!("{}", contained);
-    println!("{}", overlapping);
+    println!("{}", elf_pairs.iter().filter(|(a, b)| contains(&a, &b)).count());
+    println!("{}", elf_pairs.iter().filter(|(a, b)| overlaps(&a, &b)).count());
 }
