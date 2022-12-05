@@ -32,8 +32,12 @@ fn main() {
         tokens.next(); // to
         let to: usize = tokens.next().unwrap().parse::<usize>().unwrap() - 1;
 
+        let mut tmp = Vec::new();
         for _ in 0..count {
             let value = stacks[from].pop().unwrap();
+            tmp.insert(0, value);
+        }
+        for value in tmp {
             stacks[to].push(value);
         }
     }
