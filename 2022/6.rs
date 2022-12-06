@@ -1,18 +1,22 @@
 use std::io::{self, BufRead};
 use std::collections::HashSet;
 
+fn first_distinct(chars: Vec<char>, n: usize) -> Option<usize> {
+    for (index, window) in chars.windows(n).enumerate() {
+        let s: HashSet<_> = window.iter().collect();
+        if s.len() == window.len() {
+            return Some(index + window.len());
+        }
+    }
+    None
+}
+
 fn main() {
     let stdin = io::stdin();
     let lines = stdin.lock().lines().map(|line| line.unwrap());
 
     for line in lines {
         let chars: Vec<_> = line.chars().collect();
-        for (index, window) in chars.windows(4).enumerate() {
-            let s: HashSet<_> = window.iter().collect();
-            if s.len() == window.len() {
-                println!("{}", index + window.len());
-                break;
-            }
-        }
+        println!("{}", first_distinct(chars, 4).unwrap());
     }
 }
