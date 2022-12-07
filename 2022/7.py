@@ -25,11 +25,11 @@ class Directory:
         return [child for child in self.childs if isinstance(child, Directory) and child.name != '..']
 
 
-def sizes(node):
+def compute_sizes(node):
     assert isinstance(node, Directory)
     size = sum(f.size for f in node.files())
     for directory in node.directories():
-        for d, s in sizes(directory):
+        for d, s in compute_sizes(directory):
             if d == directory:
                 size += s
             yield d, s
@@ -61,6 +61,22 @@ def parse(lines):
             cwd.childs.append(node)
     return root
 
+def by_size(entry):
+    _, size = entry
+    return size
+
+
 root = parse(sys.stdin)
 
-print(sum(s for d, s in sizes(root) if s <= 100000))
+sizes = list(compute_sizes(root))
+print(sum(size for _, size in sizes if size <= 100000))
+
+available = 70000000
+needed = 30000000
+used = next(s for d, s in sizes if d.name == '/')
+n = available - used - needed
+
+candidates = [(d, s) for d, s in sizes if s >= -n]
+_, size = min(candidates, key=by_size)
+print(size)
+
