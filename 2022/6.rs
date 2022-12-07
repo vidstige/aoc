@@ -1,14 +1,18 @@
 use std::io::{self, BufRead};
 use std::collections::HashSet;
 
+
+fn distinct(window: &[char]) -> bool {
+    let s: HashSet<_> = window.iter().collect();
+    s.len() == window.len()
+}
+
 fn first_distinct(chars: &Vec<char>, n: usize) -> Option<usize> {
-    for (index, window) in chars.windows(n).enumerate() {
-        let s: HashSet<_> = window.iter().collect();
-        if s.len() == window.len() {
-            return Some(index + window.len());
-        }
+    let position = chars.windows(n).position(|window| distinct(window));
+    match position {
+        Some(p) => Some(p + n),
+        None => None,
     }
-    None
 }
 
 fn main() {
