@@ -58,10 +58,7 @@ fn visible_positions(grid: &Grid<bool>) -> Vec<(i32, i32)> {
     }).collect()
 }
 
-fn main() {
-    let grid = parse_grid();
-    print_grid(&grid);
-
+fn part_one(grid: &Grid<u32>) -> usize {
     // from left
     let mut left = Grid::new();
     for y in yrange(&grid) {
@@ -117,5 +114,14 @@ fn main() {
     positions.extend(visible_positions(&right));
     positions.extend(visible_positions(&top));
     positions.extend(visible_positions(&below));
-    println!("{}", positions.len());
+    
+    positions.len()
+}
+
+fn main() {
+    let grid = parse_grid();
+    //print_grid(&grid);
+
+    //println!("{}", part_one(&grid));
+
 }
