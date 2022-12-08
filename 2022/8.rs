@@ -6,13 +6,13 @@ use std::fmt::Debug;
 
 type Grid<T> = HashMap<(i32, i32), T>;
 
-fn parse_grid() -> Grid<u32> {
+fn parse_grid() -> Grid<usize> {
     let stdin = io::stdin();
     let lines = stdin.lock().lines().map(|line| line.unwrap());
-    let mut grid = HashMap::new();
+    let mut grid = Grid::new();
     for (y, line) in lines.enumerate() {
         for (x, c) in line.chars().enumerate() {
-            let height: u32 = c.to_digit(16).unwrap() + 1; // hack to keep using usize
+            let height = c.to_digit(16).unwrap() as usize;
             grid.insert((x as i32, y as i32), height);
         }
     }
@@ -34,6 +34,7 @@ fn yrange<T>(grid: &Grid<T>) -> Range<i32> {
 }
 
 fn print_grid<T>(grid: &Grid<T>) where T: Debug {
+    println!("----------");
     for y in yrange(&grid) {
         for x in xrange(&grid) {
             print!("{:?}", grid[&(x, y)]);
@@ -83,7 +84,6 @@ fn part_one(grid: &Grid<u32>) -> usize {
     }
     print_bool_grid(&right);
 
-
     // from top
     let mut top = Grid::new();
     for x in xrange(&grid) {
@@ -121,7 +121,91 @@ fn part_one(grid: &Grid<u32>) -> usize {
 fn main() {
     let grid = parse_grid();
     //print_grid(&grid);
+    
 
     //println!("{}", part_one(&grid));
+    
+    let mut left: Grid<i32> = Grid::new();
+    for y in yrange(&grid) {
+        // how many trees of hight n is visible
+        let mut counter: [i32; 10] = [0; 10];
+        for x in xrange(&grid) {
+            let h = grid[&(x, y)];
+            left.insert((x, y), counter[h]);
+            for i in 0..h+1 {
+                counter[i] = 0;
+            }
+            for i in 0..10 {
+                counter[i] += 1;
+            }
+        }
+    }
+    //print_grid(&left);
 
+    // from right
+    let mut right: Grid<i32> = Grid::new();
+    for y in yrange(&grid) {
+        // how many trees of hight n is visible
+        let mut counter: [i32; 10] = [0; 10];
+        for x in xrange(&grid).rev() {
+            let h = grid[&(x, y)];
+            right.insert((x, y), counter[h]);
+            for i in 0..h+1 {
+                counter[i] = 0;
+            }
+            for i in 0..10 {
+                counter[i] += 1;
+            }
+
+        }
+    }
+    //print_grid(&right);
+
+    // from top
+    let mut top: Grid<i32> = Grid::new();
+    for x in xrange(&grid) {
+        // how many trees of hight n is visible
+        let mut counter: [i32; 10] = [0; 10];
+        for y in yrange(&grid) {
+            let h = grid[&(x, y)];
+            top.insert((x, y), counter[h]);
+            for i in 0..h+1 {
+                counter[i] = 0;
+            }
+            for i in 0..10 {
+                counter[i] += 1;
+            }
+        }
+    }
+    //print_grid(&top);
+
+    // from below
+    let mut below: Grid<i32> = Grid::new();
+    for x in xrange(&grid) {
+        // how many trees of hight n is visible
+        let mut counter: [i32; 10] = [0; 10];
+        for y in yrange(&grid).rev() {
+            let h = grid[&(x, y)];
+            below.insert((x, y), counter[h]);
+            for i in 0..h+1 {
+                counter[i] = 0;
+            }
+            for i in 0..10 {
+                counter[i] += 1;
+            }
+        }
+    }
+    //print_grid(&below);
+
+    let mut scores = Grid::new();
+    for x in xrange(&grid) {
+        for y in yrange(&grid) {
+            let p = (x, y);
+            let score = left[&p] * right[&p] * top[&p] * below[&p];
+            scores.insert(p, score);
+        }
+    }
+    //print_grid(&scores);
+
+    println!("{}", scores.values().max().unwrap());
 }
