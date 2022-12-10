@@ -37,9 +37,12 @@ fn main() {
     let mut cycle = 1;
     let mut ip = 0;
     let mut cycles_left = cycles_for(&instructions[ip]);
-    let mut signals = Vec::new();
+    let mut pixels = Vec::new();
     while ip < instructions.len() || cycles_left > 0 {
-        let during = x;
+        // draw pixel
+        let sprite_position = x as i32;
+        pixels.push((pixels.len() as i32 - sprite_position).abs() <= 1);
+
         cycles_left -= 1;
         if cycles_left == 0 {
             // finish current instruction, if any
@@ -56,15 +59,18 @@ fn main() {
             cycles_left = if ip == instructions.len() { 1 } else { cycles_for(&instructions[ip]) };
         }
 
-        let after = x;
-        let signal_strength = cycle * during;
+        if (pixels.len() == 40) {
+            let scan_line: String = pixels.iter().map(|lit| if *lit { '#' } else { '.' }).collect();
+            println!("{}", scan_line);
+            pixels.clear();
+        }
         //println!("cycle: {}, during: {}, after: {}, signal strength left: {}", cycle, during, after, signal_strength);
         if (cycle + 20) % 40 == 0 {            
             //println!("{} {} {}", cycle, during, signal_strength);
-            signals.push(signal_strength);
+            //signals.push(signal_strength);
         }
         
         cycle += 1;
     }
-    println!("{}", signals.iter().sum::<i32>());
+    //println!("{}", signals.iter().sum::<i32>());
 }
