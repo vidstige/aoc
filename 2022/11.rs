@@ -8,12 +8,12 @@ fn line_value(line: &String) -> String {
 }
 
 enum Operand {
-    Literal(i32),
+    Literal(i64),
     Old,
 }
 
 impl Operand {
-    fn apply(&self, old: i32) -> i32 {
+    fn apply(&self, old: i64) -> i64 {
         match self {
             Operand::Literal(value) => *value,
             Operand::Old => old,
@@ -27,7 +27,7 @@ enum Operation {
 }
 
 impl Operation {
-    fn apply(&self, old: i32) -> i32 {
+    fn apply(&self, old: i64) -> i64 {
         match self {
             Operation::Add(left, right) => left.apply(old) + right.apply(old),
             Operation::Mul(left, right) => left.apply(old) * right.apply(old),
@@ -47,16 +47,16 @@ impl FromStr for Operand {
 }
 
 struct Monkey {
-    items: Vec<i32>,
+    items: Vec<i64>,
     operation: Operation,
-    test: i32,
+    test: i64,
     throw_true: usize,
     throw_false: usize,
     counter: usize,
 }
 
 fn parse_monkey(lines: &[String]) -> Monkey {
-    let items: Vec<i32> = line_value(&lines[1]).split(",").map(|p| p.trim().parse().unwrap()).collect();
+    let items: Vec<_> = line_value(&lines[1]).split(",").map(|p| p.trim().parse().unwrap()).collect();
     
     let value = line_value(&lines[2]);
     let mut parts = value.split(" ");
@@ -85,11 +85,11 @@ fn parse_monkey(lines: &[String]) -> Monkey {
     }
 }
 
-fn throw(monkeys: &mut Vec<Monkey>, index: usize) {
+fn throw(monkeys: &mut Vec<Monkey>, index: usize, divider: i64) {
     let monkey = &monkeys[index];
     for item in monkey.items.clone() {
         monkeys[index].counter += 1;
-        let value = monkeys[index].operation.apply(item) / 3;
+        let value = monkeys[index].operation.apply(item) % divider;
         let to_index = if value % monkeys[index].test == 0 {
             monkeys[index].throw_true
         } else {
@@ -106,10 +106,15 @@ fn main() {
     
     let mut monkeys: Vec<_> = lines.chunks(7).map(|ml| parse_monkey(ml)).collect();
 
-    for _ in 0..20 {
+    let divider = monkeys.iter().map(|monkey| monkey.test).product();
+    for _ in 0..10000 {
         for index in 0..monkeys.len() {
-            throw(&mut monkeys, index);
+            throw(&mut monkeys, index, divider);
         }
+    }
+
+    for monkey in monkeys.iter() {
+        println!("{}", monkey.counter);
     }
 
     let mut counters: Vec<_> = monkeys.iter().map(|monkey| monkey.counter).collect();
