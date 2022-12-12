@@ -78,7 +78,6 @@ fn dijkstra(grid: &Grid, start: Position, end: Position) -> Option<usize> {
         if position == end {
             return Some(cost);
         }
-        println!("{:?} {}", position, cost);
         
         // skip if we already found something better
         if cost > *costs.get(&position).unwrap_or(&usize::MAX) { continue; }
@@ -102,9 +101,17 @@ fn dijkstra(grid: &Grid, start: Position, end: Position) -> Option<usize> {
 
 fn main() {
     let (grid, start, goal) = parse();
+
+    // part one
     if let Some(steps) = dijkstra(&grid, start, goal) {
         println!("{}", steps);
-    } else {
-        println!("No path from {:?} to {:?}", start, goal);
     }
+
+    // part two
+    let best = grid
+        .iter()
+        .filter(|(_, height)| **height == 0)
+        .map(|(position, _)| position)
+        .filter_map(|s| dijkstra(&grid, *s, goal)).min().unwrap();
+    println!("{}", best);
 }
