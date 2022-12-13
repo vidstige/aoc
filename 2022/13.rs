@@ -1,7 +1,9 @@
 use std::io::{self, BufRead};
+use std::ops::Index;
 use std::str::FromStr;
 use std::iter;
 use std::fmt;
+use itertools::Itertools;
 
 #[derive(Clone)]
 enum Item {
@@ -20,6 +22,12 @@ impl PartialEq for Item {
             (Self::List(lhs), Self::Literal(_)) => lhs.iter().eq(iter::once(other)),
             (Self::List(lhs), Self::List(rhs)) => lhs.iter().eq(rhs.iter()),
         }
+    }
+}
+
+impl Ord for Item {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap()
     }
 }
 
@@ -107,23 +115,30 @@ impl fmt::Display for Item {
     }
 }
 
-fn parse() -> usize {
+fn parse() -> Vec<Item> {
     let stdin = io::stdin();
-    let lines: Vec<_> = stdin.lock().lines().map(|line| line.unwrap()).collect();
+    let lines = stdin.lock().lines().map(|line| line.unwrap());
 
-    lines.chunks(3).enumerate().filter_map(|(index, chunk)| {
-        let a: Item = chunk[0].parse().unwrap();
-        let b: Item = chunk[1].parse().unwrap();
-        if a.le(&b) {
-            Some(index + 1)
-        } else {
+    lines.filter_map(|line| {
+        if line.is_empty() {
             None
+        } else {
+            line.parse().ok()
         }
-    }).sum()
+    }).collect()
 }
 
-
+fn decoder_key(items: &Vec<Item>) -> usize {
+    let dividers: [Item; 2] = ["[[2]]".parse().unwrap(), "[[6]]".parse().unwrap()];
+    let sorted: Vec<_> = items.iter().chain(&dividers).sorted().collect();
+    let indices = dividers.iter().map(|divider| sorted.iter().position(|item| *item == divider).unwrap() + 1);
+    indices.product()
+}
 fn main() {
-    let answer = parse();
-    println!("{}", answer);
+    let items = parse();
+    
+    let part_one: usize = items.chunks(2).enumerate().filter_map(|(index, chunk)| if chunk[0].le(&chunk[1]) { Some(index + 1) } else { None}).sum();
+    println!("{}", part_one);
+
+    println!("{}", decoder_key(&items));
 }
