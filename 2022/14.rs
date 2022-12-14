@@ -53,12 +53,11 @@ fn fill(grid: &mut HashSet<Point>, polygons: &Vec<Vec<Point>>) {
     }
 }
 
-fn drop(grid: &HashSet<Point>, spawn: &Point) -> Option<Point> {
-    let bottom = grid.iter().map(|p| p.y).max();
+fn drop(grid: &HashSet<Point>, spawn: &Point, floor: i32) -> Option<Point> {
     let mut p = spawn.clone();
-    while Some(p.y) <= bottom {
+    while p.y <= floor {
         let candidates = [Point{x: p.x, y: p.y + 1}, Point{x: p.x - 1, y: p.y + 1}, Point{x: p.x + 1, y: p.y + 1}];
-        if let Some(next) = candidates.iter().find(|c| !grid.contains(c)) {
+        if let Some(next) = candidates.iter().find(|c| !(grid.contains(c) || c.y == floor)) {
             p = next.clone();
         } else {
             return Some(p);
@@ -75,10 +74,16 @@ fn main() {
     
     let mut grid = HashSet::new();
     fill(&mut grid, &polygons);
+    let bottom = grid.iter().map(|p| p.y).max().unwrap();
+    let floor = bottom + 2;
+
     let mut counter = 0;
-    while let Some(rest) = drop(&grid, &spawn) {
-        grid.insert(rest);
+    while let Some(rest) = drop(&grid, &spawn, floor) {
         counter += 1;
+        if rest == spawn {
+            break;
+        }
+        grid.insert(rest);
     }
     println!("{}", counter);
 }
