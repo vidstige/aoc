@@ -1,8 +1,48 @@
-use std::{io::{self, BufRead}, str::FromStr, num::ParseIntError};
-use std::collections::HashSet;
+use std::convert::TryInto;
+use std::io::{self, BufRead};
+use std::ops::{RangeInclusive};
+use std::{str::FromStr, num::ParseIntError};
 use regex::{Regex, Captures};
 
 type Point = (i32, i32);
+
+struct RangeSet<T> where T: Clone+PartialOrd {
+    include: Vec<RangeInclusive<T>>,
+    exclude: Vec<T>,
+}
+
+fn sub(a: &i32, b: &i32) -> usize {
+    (a - b).try_into().unwrap()
+}
+
+impl RangeSet<i32>  {
+    fn new() -> RangeSet<i32>{
+        RangeSet{include: Vec::new(), exclude: Vec::new()}
+    }
+    /*fn contains(&self, item: &i32) -> bool {
+        self.include.iter().any(|range| range.contains(item) && !self.exclude.contains(item))
+    }*/
+    fn len(&self) -> usize {
+        let lo = self.include.iter().map(|r| r.start()).min().unwrap();
+        let hi = self.include.iter().map(|r| r.start()).max().unwrap();
+        let mut tmp = vec![false; sub(hi, lo)];
+        for range in &self.include {
+            for i in range.clone() {
+                tmp[sub(&i, lo)] = true;
+            }
+        }
+        for i in &self.exclude {
+            tmp[sub(i, lo)] = false;
+        }
+        tmp.iter().filter(|i| **i).count()
+    }
+    fn extend(&mut self, range: &RangeInclusive<i32>) {
+        self.include.push((*range).clone());
+    }
+    fn remove(&mut self, index: &i32) {
+        self.exclude.push(*index);
+    }
+}
 
 fn group_as<T, E>(captures: &Captures, index: usize) -> Result<T, E> where T: FromStr<Err = E> {
     captures.get(index).unwrap().as_str().parse()
@@ -31,19 +71,17 @@ impl FromStr for Sensor {
     }
 }
 
-fn fill(grid: &mut HashSet<i32>, sensor: &Sensor, y: i32) {
+fn fill(grid: &mut RangeSet<i32>, sensor: &Sensor, y: i32) {
     let (px, py) = sensor.position;
     let d = manhattan(&sensor.position, &sensor.beacon);
     assert!(d >= 0);
     let r = d - (py - y).abs();
     //println!("r: {r}, p: ({px}, {py}), d: {d}");
-    for x in (px - r)..=(px + r) {
-        grid.insert(x);
-    }
+    grid.extend(&((px - r)..=(px + r)));
 }
 
 fn part_one(sensors: &Vec<Sensor>, search_y: i32) -> usize {
-    let mut grid = HashSet::new();
+    let mut grid = RangeSet::new();
     for sensor in sensors {
         fill(&mut grid, sensor, search_y);
     }
