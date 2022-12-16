@@ -1,8 +1,9 @@
 use std::io::{self, BufRead};
-use std::ops::{RangeInclusive, Range};
+use std::ops::Range;
 use std::{str::FromStr, num::ParseIntError};
 use regex::{Regex, Captures};
 
+#[derive(Clone)]
 struct RangeSet<T> where T: Clone+PartialOrd {
     include: Vec<Range<T>>,
     exclude: Vec<T>,
@@ -12,6 +13,14 @@ fn sub(a: i32, b: i32) -> usize {
     (a - b) as usize
 }
 
+fn overlaps<T>(a: &Range<T>, b: &Range<T>) -> bool where T: PartialOrd {
+    a.start <= b.end && b.start <= a.end
+}
+
+// wether a completely contains b
+fn contains<T>(a: &Range<T>, b: &Range<T>) -> bool where T: PartialOrd {
+    a.contains(&b.start) && a.contains(&b.end)
+}
 
 impl RangeSet<i32>  {
     fn new() -> RangeSet<i32>{
@@ -76,21 +85,52 @@ impl RangeSet<i32>  {
     fn remove(&mut self, index: &i32) {
         self.exclude.push(*index);
     }
-    fn difference(&self, rhs: &RangeSet<i32>) -> Vec<i32> {
-        let full_range = combine(&self.full_range(), &rhs.full_range());
-        let mut lhs_dense = self.dense(&full_range);
-        let rhs_dense = rhs.dense(&full_range);
-
-        for (lhs_contains, rhs_contains) in lhs_dense.iter_mut().zip(rhs_dense) {
-            *lhs_contains &= !rhs_contains;
+    fn difference(&self, rhs: &RangeSet<i32>) -> RangeSet<i32> {
+        let mut stack = self.include.clone(); // intervals left to check
+        let mut include = Vec::new(); // ok intervals
+        
+        while let Some(lhs_range) = stack.pop() {
+            let mut dirty = false;
+            if lhs_range.is_empty() {
+                continue;
+            }
+            for rhs_range in &rhs.include {
+                if contains(rhs_range, &lhs_range) {
+                    // discard range
+                    dirty = true;
+                    break;
+                } 
+                if contains(&lhs_range, rhs_range) {
+                    // we need to split this range
+                    // aaaaaaaaaaaaa
+                    //       bbbbb
+                    // aaaaaa    aaa
+                    stack.push(lhs_range.start..rhs_range.start-1);
+                    stack.push(rhs_range.end..lhs_range.end);
+                    dirty = true;
+                    break;
+                } else {
+                    // check for right/left overlaps
+                    if lhs_range.contains(&rhs_range.start) {
+                        // move lhs end left if needed
+                        stack.push(lhs_range.start..rhs_range.start);
+                        dirty = true;
+                        break; // keep going
+                    }
+                    if lhs_range.contains(&(rhs_range.end - 1)) {
+                        // move lhs start right if needed
+                        stack.push(rhs_range.end..lhs_range.end);
+                        dirty = true;
+                        break; // keep going
+                    }
+                }
+            }
+            if !dirty {
+                include.push(lhs_range);
+            }
         }
-
-        //RangeSet::undense(lhs_dense, *full_range.start())
-        lhs_dense
-            .iter()
-            .enumerate()
-            .filter_map(|(index, contains)| contains.then(|| index as i32 + full_range.start))
-            .collect()
+        
+        RangeSet { include: include, exclude: self.exclude.clone() }
     }
     // poor mans iter
     fn items(&self) -> Vec<i32> {
@@ -184,22 +224,22 @@ fn part_one(sensors: &Vec<Sensor>, search_y: i32) -> usize {
     row.len()
 }
 
-fn tuning_frequency(x: i32, y: i32) -> i32 {
-    x * 4000000 + y
+fn tuning_frequency(x: i32, y: i32) -> i64 {
+    x as i64 * 4000000 + y as i64
 }
 
-fn part_two(sensors: &Vec<Sensor>, n: i32) -> Option<i32> {
+fn part_two(sensors: &Vec<Sensor>, n: i32) -> Option<i64> {
     for y in 0..=n {
         let mut row = RangeSet::new();
         for sensor in sensors {
             fill(&mut row, sensor, y);
         }
-        let everything = RangeSet::from([0..n].as_slice());
-        if let Some(x) = everything.difference(&row).first() {
+        let everything = RangeSet::from([0..n+1].as_slice());
+        let tmp = everything.difference(&row);
+        if let Some(x) = tmp.items().first() {
             return Some(tuning_frequency(*x, y));
         }
-
-        //println!("{y}");
+        //println!("y: {y}");
     }
     return None
 }
@@ -209,8 +249,8 @@ fn main() {
     let lines = stdin.lock().lines().map(|line| line.unwrap());    
     let sensors: Vec<Sensor> = lines.map(|line| line.parse().unwrap()).collect();
     
-    println!("{}", part_one(&sensors, 10));
-    println!("{:?}", part_two(&sensors, 20));
-    //println!("{}", part_one(&sensors, 2000000));
-    //println!("{:?}", part_two(&sensors, 4000000));
+    //println!("{}", part_one(&sensors, 10));
+    //println!("{:?}", part_two(&sensors, 20));
+    println!("{}", part_one(&sensors, 2000000));
+    println!("{:?}", part_two(&sensors, 4000000));
 }
