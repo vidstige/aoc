@@ -1,14 +1,14 @@
 use std::io::{self, BufRead};
-use std::ops::{RangeInclusive};
+use std::ops::{RangeInclusive, Range};
 use std::{str::FromStr, num::ParseIntError};
 use regex::{Regex, Captures};
 
 struct RangeSet<T> where T: Clone+PartialOrd {
-    include: Vec<RangeInclusive<T>>,
+    include: Vec<Range<T>>,
     exclude: Vec<T>,
 }
 
-fn sub(a: &i32, b: &i32) -> usize {
+fn sub(a: i32, b: i32) -> usize {
     (a - b) as usize
 }
 
@@ -20,25 +20,25 @@ impl RangeSet<i32>  {
     /*fn contains(&self, item: &i32) -> bool {
         self.include.iter().any(|range| range.contains(item) && !self.exclude.contains(item))
     }*/
-    fn full_range(&self) -> RangeInclusive<i32> {
-        let maybe_lo = self.include.iter().map(|r| r.start()).min();
-        let maybe_hi = self.include.iter().map(|r| r.end()).max();
+    fn full_range(&self) -> Range<i32> {
+        let maybe_lo = self.include.iter().map(|r| r.start).min();
+        let maybe_hi = self.include.iter().map(|r| r.end).max();
         match (maybe_lo, maybe_hi) {
-            (Some(lo), Some(hi)) => *lo..=*hi,
-            _ => 0..=-1,  // empty inclusive range
+            (Some(lo), Some(hi)) => lo..hi,
+            _ => 0..0,
         }
         
     }
-    fn dense(&self, full_range: &RangeInclusive<i32>) -> Vec<bool>{
-        let mut dense = vec![false; sub(full_range.end(), full_range.start()) + 1];
+    fn dense(&self, full_range: &Range<i32>) -> Vec<bool>{
+        let mut dense = vec![false; sub(full_range.end, full_range.start) + 1];
         for range in &self.include {
             for i in range.clone() {
-                dense[sub(&i, full_range.start())] = true;
+                dense[sub(i, full_range.start)] = true;
             }
         }
         // TODO: i might be outside
         for i in &self.exclude {
-            dense[sub(i, full_range.start())] = false;
+            dense[sub(*i, full_range.start)] = false;
         }
         dense
     }
@@ -54,13 +54,13 @@ impl RangeSet<i32>  {
                 }
             } else {
                 if let Some(current) = maybe_current {
-                    set.extend(&(current..=(index-1)));
+                    set.extend(&(current..index));
                 }
                 maybe_current = None;
             }
         }
         if let Some(current) = maybe_current {
-            set.extend(&(current..=(dense.len() as i32 + lo)));
+            set.extend(&(current..dense.len() as i32 + lo));
         }
         set
     }
@@ -68,7 +68,7 @@ impl RangeSet<i32>  {
         let dense = self.dense(&self.full_range());
         dense.iter().filter(|i| **i).count()
     }
-    fn extend(&mut self, range: &RangeInclusive<i32>) {
+    fn extend(&mut self, range: &Range<i32>) {
         if !range.is_empty() {
             self.include.push((*range).clone());
         }
@@ -76,7 +76,7 @@ impl RangeSet<i32>  {
     fn remove(&mut self, index: &i32) {
         self.exclude.push(*index);
     }
-    fn difference(&self, rhs: &RangeSet<i32>) -> RangeSet<i32> {
+    fn difference(&self, rhs: &RangeSet<i32>) -> Vec<i32> {
         let full_range = combine(&self.full_range(), &rhs.full_range());
         let mut lhs_dense = self.dense(&full_range);
         let rhs_dense = rhs.dense(&full_range);
@@ -85,28 +85,33 @@ impl RangeSet<i32>  {
             *lhs_contains &= !rhs_contains;
         }
 
-        RangeSet::undense(lhs_dense, *full_range.start())
+        //RangeSet::undense(lhs_dense, *full_range.start())
+        lhs_dense
+            .iter()
+            .enumerate()
+            .filter_map(|(index, contains)| contains.then(|| index as i32 + full_range.start))
+            .collect()
     }
     // poor mans iter
     fn items(&self) -> Vec<i32> {
         let full_range = self.full_range();
-        let rhs_dense = self.dense(&full_range);
-        rhs_dense
+        let dense = self.dense(&full_range);
+        dense
             .iter()
             .enumerate()
-            .filter_map(|(index, contains)| contains.then(|| index as i32 + full_range.start()))
+            .filter_map(|(index, contains)| contains.then(|| index as i32 + full_range.start))
             .collect()
     }
 }
 
-fn combine(a: &RangeInclusive<i32>, b: &RangeInclusive<i32>) -> RangeInclusive<i32> {
-    let start = a.start().min(b.start());
-    let end = a.end().max(b.end());
-    *start..=*end
+fn combine(a: &Range<i32>, b: &Range<i32>) -> Range<i32> {
+    let start = a.start.min(b.start);
+    let end = a.end.max(b.end);
+    start..end
 }
 
-impl From<&[RangeInclusive<i32>]> for RangeSet<i32> {
-    fn from(slice: &[RangeInclusive<i32>]) -> Self {
+impl From<&[Range<i32>]> for RangeSet<i32> {
+    fn from(slice: &[Range<i32>]) -> Self {
         RangeSet { include: slice.to_vec(), exclude: Vec::new() }
     }
 }
@@ -142,7 +147,7 @@ impl FromStr for Sensor {
 
 fn print_range_set(range_set: &RangeSet<i32>) {
     for range in &range_set.include {
-        println!("{}-{}", range.start(), range.end());
+        println!("{}-{}", range.start, range.end);
     }
 }
 
@@ -150,7 +155,7 @@ fn print_dense_range_set(range_set: &RangeSet<i32>) {
     let full_range = range_set.full_range();
     let dense = range_set.dense(&full_range);
     for (index, contains) in dense.iter().enumerate() {
-        println!("{}: {}", index as i32 + full_range.start(), contains);
+        println!("{}: {}", index as i32 + full_range.start, contains);
     }
 }
 
@@ -160,7 +165,7 @@ fn fill(grid: &mut RangeSet<i32>, sensor: &Sensor, y: i32) {
     assert!(d >= 0);
     let r = d - (py - y).abs();
     //println!("r: {r}, p: ({px}, {py}), d: {d}");
-    grid.extend(&((px - r)..=(px + r)));
+    grid.extend(&((px - r)..(px + r + 1)));
 }
 
 fn part_one(sensors: &Vec<Sensor>, search_y: i32) -> usize {
@@ -189,12 +194,12 @@ fn part_two(sensors: &Vec<Sensor>, n: i32) -> Option<i32> {
         for sensor in sensors {
             fill(&mut row, sensor, y);
         }
-        let everything = RangeSet::from([0..=n].as_slice());
-        if let Some(x) = everything.difference(&row).items().first() {
+        let everything = RangeSet::from([0..n].as_slice());
+        if let Some(x) = everything.difference(&row).first() {
             return Some(tuning_frequency(*x, y));
         }
 
-        println!("{y}");
+        //println!("{y}");
     }
     return None
 }
@@ -204,8 +209,8 @@ fn main() {
     let lines = stdin.lock().lines().map(|line| line.unwrap());    
     let sensors: Vec<Sensor> = lines.map(|line| line.parse().unwrap()).collect();
     
-    //println!("{}", part_one(&sensors, 10));
-    //println!("{:?}", part_two(&sensors, 20));
-    println!("{}", part_one(&sensors, 2000000));
-    println!("{:?}", part_two(&sensors, 4000000));
+    println!("{}", part_one(&sensors, 10));
+    println!("{:?}", part_two(&sensors, 20));
+    //println!("{}", part_one(&sensors, 2000000));
+    //println!("{:?}", part_two(&sensors, 4000000));
 }
