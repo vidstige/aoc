@@ -34,5 +34,12 @@ matches = [matching(numbers, winners) for numbers, winners in cards]
 print(sum(value(m) for m in matches))
 
 # second star
+def count(matches: List[int]):
+    n = len(matches)
+    copies = [1] * n
+    for i, m in enumerate(matches):
+        for j in range(i + 1, i + m + 1):
+            copies[j] += copies[i]
+    return sum(copies)
 
-#def count(cards: List[int])
+print(count(matches))
