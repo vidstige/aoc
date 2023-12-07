@@ -2,8 +2,6 @@ use std::cmp::Ordering;
 use std::io::{self, BufRead};
 use std::str::FromStr;
 
-use itertools::enumerate;
-
 type Card = u8;
 
 #[derive(Eq, Debug)]
@@ -61,10 +59,10 @@ impl FromStr for Hand {
     }
 }
 
-fn parse_line(s: &str) -> (Hand, i32) {
+fn parse_line(s: &str) -> (Hand, usize) {
     let mut parts = s.split_whitespace();
     let hand: Hand = parts.next().unwrap().parse().unwrap();
-    let bid: i32 = parts.next().unwrap().parse().unwrap();
+    let bid: usize = parts.next().unwrap().parse().unwrap();
     (hand, bid)
 }
 
@@ -73,14 +71,11 @@ fn main() {
     let lines = stdin.lock().lines();
 
     let mut data: Vec<_> = lines.map(|line| line.unwrap()).map(|line| parse_line(&line)).collect();
-
+    // sort by hand (and bid)
     data.sort();
-    let mut total = 0;
-    for (index, (hand, bid)) in data.iter().enumerate() {
-        let rank = (index + 1) as i32;
-        total += rank * bid; 
-        //println!("{:?} {} {}", hand, hand.kind(), bid);
-    }
+    // fetch bids
+    let bids: Vec<_> = data.iter().map(|(_, bid)| bid).collect();
+    let total: usize = bids.iter().enumerate().map(|(index, bid)| (index + 1) * *bid).sum();
     println!("{}", total);
 
 }
