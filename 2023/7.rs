@@ -18,13 +18,16 @@ impl Hand {
         // we don't care which card value has what count, just the counts
         counts.sort();
         counts.reverse();
-        if counts[0] == 5 { return 6;} // five of a kind
-        if counts[0] == 4 { return 5; } // four of a kind
-        if counts[0] == 3 && counts[1] == 2 { return 4; } // full house
-        if counts[0] == 3 { return 3; } // three of a kind
-        if counts[0] == 2 && counts[1] == 2 { return 2; } // two pars
-        if counts[0] == 2 { return 1; } // pair
-        0  // high card
+        // check top two counts
+        match (counts[0], counts[1]) {
+            (5, _) => 6, // five of a kind
+            (4, _) => 5, // four of a kind
+            (3, 2) => 4, // full house
+            (3, _) => 3, // three of a kind
+            (2, 2) => 2, // two pairs
+            (2, _) => 1, // pair
+            (_, _) => 0, // high card
+        }
     }
 }
 
