@@ -1,0 +1,14 @@
+[package]
+name = "aoc2023"
+version = "0.1.0"
+authors = ["Samuel Carlsson <samuel.carlsson@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+itertools = "0.10.5"
+regex = "1"
+
+[[bin]]
+name = "7"
+path = "7.rs"
+
