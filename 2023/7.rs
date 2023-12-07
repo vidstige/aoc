@@ -3,6 +3,8 @@ use std::io::{self, BufRead};
 use std::str::FromStr;
 
 type Card = u8;
+//const VALUES: &str = "23456789TJQKA";
+const VALUES: &str = "J23456789TQKA";
 
 #[derive(Eq, Debug)]
 struct Hand {
@@ -21,15 +23,18 @@ enum Kind {
 
 impl Hand {
     fn kind(&self) -> Kind {
+        let joker = VALUES.chars().position(|c| c == 'J').unwrap();
         let mut counts: [u8; 13] = [0; 13];
         for card in self.cards {
             counts[card as usize] += 1;
         }
+        let jokers = counts[joker];
+        counts[joker] = 0;
         // we don't care which card value has what count, just the counts
         counts.sort();
         counts.reverse();
         // check top two counts
-        match (counts[0], counts[1]) {
+        match (counts[0] + jokers, counts[1]) {
             (5, _) => Kind::FiveOfAKind,
             (4, _) => Kind::FourOfAKind,
             (3, 2) => Kind::FullHouse,
@@ -66,8 +71,7 @@ struct ParseHandError;
 impl FromStr for Hand {
     type Err = ParseHandError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let values = "23456789TJQKA";
-        let cards: Vec<_> = s.chars().map(|card| values.chars().position(|c| c == card).unwrap() as u8).collect();
+        let cards: Vec<_> = s.chars().map(|card| VALUES.chars().position(|c| c == card).unwrap() as u8).collect();
         Ok(Hand{cards: [cards[0], cards[1], cards[2], cards[3], cards[4]]})
     }
 }
