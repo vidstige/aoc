@@ -21,6 +21,9 @@ enum Kind {
     FiveOfAKind,
 }
 
+trait Joker {
+    
+}
 impl Hand {
     fn kind(&self) -> Kind {
         let joker = VALUES.chars().position(|c| c == 'J').unwrap();
@@ -46,19 +49,6 @@ impl Hand {
     }
 }
 
-impl PartialOrd for Hand {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Hand {
-    fn cmp(&self, other: &Self) -> Ordering {
-        (self.kind() as isize, self.cards).cmp(&(other.kind() as isize, other.cards))
-    }
-}
-
-
 impl PartialEq for Hand {
     fn eq(&self, other: &Self) -> bool {
         self.cards == other.cards
@@ -83,13 +73,19 @@ fn parse_line(s: &str) -> (Hand, usize) {
     (hand, bid)
 }
 
+fn compare_hands(a: &Hand, b: &Hand) -> Ordering {
+    (a.kind() as isize, a.cards).cmp(&(b.kind() as isize, b.cards))
+}
+
 fn main() {
     let stdin = io::stdin();
     let lines = stdin.lock().lines();
 
     let mut data: Vec<_> = lines.map(|line| line.unwrap()).map(|line| parse_line(&line)).collect();
     // sort by hand (and bid)
-    data.sort();
+    //data.sort();
+    data.sort_unstable_by(|(a, _), (b, _)| compare_hands(a, b));
+
     // fetch bids
     let bids: Vec<_> = data.iter().map(|(_, bid)| bid).collect();
     let total: usize = bids.iter().enumerate().map(|(index, bid)| (index + 1) * *bid).sum();
