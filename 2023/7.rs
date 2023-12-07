@@ -2,13 +2,12 @@ use std::cmp::Ordering;
 use std::io::{self, BufRead};
 use std::str::FromStr;
 
-type Card = u8;
-//const VALUES: &str = "23456789TJQKA";
-const VALUES: &str = "J23456789TQKA";
+const VALUES: &str = "23456789TJQKA";
+const JOKER_VALUES: &str = "J23456789TQKA";
 
 #[derive(Eq, Debug)]
 struct Hand {
-    cards: [Card; 5],
+    cards: [char; 5],
 }
 
 enum Kind {
@@ -25,14 +24,20 @@ trait Joker {
     
 }
 impl Hand {
-    fn kind(&self) -> Kind {
-        let joker = VALUES.chars().position(|c| c == 'J').unwrap();
+    fn values(&self, values: &str) -> [usize; 5] {
+        self.cards.map(|card| values.chars().position(|c| c == card).unwrap())
+    }
+    fn kind(&self, values: &str, joker: Option<char>) -> Kind {
+        let joker = joker.and_then(|j| values.chars().position(|c| c == j));
         let mut counts: [u8; 13] = [0; 13];
-        for card in self.cards {
+        for card in self.values(values) {
             counts[card as usize] += 1;
         }
-        let jokers = counts[joker];
-        counts[joker] = 0;
+        let mut jokers = 0;
+        if let Some(j) = joker {
+            jokers = counts[j];
+            counts[j] = 0;
+        }
         // we don't care which card value has what count, just the counts
         counts.sort();
         counts.reverse();
@@ -61,7 +66,7 @@ struct ParseHandError;
 impl FromStr for Hand {
     type Err = ParseHandError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let cards: Vec<_> = s.chars().map(|card| VALUES.chars().position(|c| c == card).unwrap() as u8).collect();
+        let cards: Vec<_> = s.chars().collect();
         Ok(Hand{cards: [cards[0], cards[1], cards[2], cards[3], cards[4]]})
     }
 }
@@ -73,8 +78,15 @@ fn parse_line(s: &str) -> (Hand, usize) {
     (hand, bid)
 }
 
-fn compare_hands(a: &Hand, b: &Hand) -> Ordering {
-    (a.kind() as isize, a.cards).cmp(&(b.kind() as isize, b.cards))
+fn compare_hands(a: &Hand, b: &Hand, values: &str, joker: Option<char>) -> Ordering {
+    (a.kind(values, joker) as isize, a.values(values)).cmp(&(b.kind(values, joker) as isize, b.values(values)))
+}
+
+fn winnings(data: &Vec<(Hand, usize)>) -> usize {
+    data
+        .iter().map(|(_, bid)| bid)  // fetch only bids
+        .enumerate().map(|(index, bid)| (index + 1) * *bid)
+        .sum()
 }
 
 fn main() {
@@ -82,13 +94,12 @@ fn main() {
     let lines = stdin.lock().lines();
 
     let mut data: Vec<_> = lines.map(|line| line.unwrap()).map(|line| parse_line(&line)).collect();
-    // sort by hand (and bid)
-    //data.sort();
-    data.sort_unstable_by(|(a, _), (b, _)| compare_hands(a, b));
 
-    // fetch bids
-    let bids: Vec<_> = data.iter().map(|(_, bid)| bid).collect();
-    let total: usize = bids.iter().enumerate().map(|(index, bid)| (index + 1) * *bid).sum();
-    println!("{}", total);
+    // first star
+    data.sort_unstable_by(|(a, _), (b, _)| compare_hands(a, b, VALUES, None));
+    println!("{}", winnings(&data));
 
+    // second star
+    data.sort_unstable_by(|(a, _), (b, _)| compare_hands(a, b, JOKER_VALUES, Some('J')));
+    println!("{}", winnings(&data));
 }
