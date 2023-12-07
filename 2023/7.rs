@@ -9,8 +9,18 @@ struct Hand {
     cards: [Card; 5],
 }
 
+enum Kind {
+    HighCard,
+    Pair,
+    TwoPairs,
+    ThreeOfAKind,
+    FullHouse,
+    FourOfAKind,
+    FiveOfAKind,
+}
+
 impl Hand {
-    fn kind(&self) -> i32 {
+    fn kind(&self) -> Kind {
         let mut counts: [u8; 13] = [0; 13];
         for card in self.cards {
             counts[card as usize] += 1;
@@ -20,13 +30,13 @@ impl Hand {
         counts.reverse();
         // check top two counts
         match (counts[0], counts[1]) {
-            (5, _) => 6, // five of a kind
-            (4, _) => 5, // four of a kind
-            (3, 2) => 4, // full house
-            (3, _) => 3, // three of a kind
-            (2, 2) => 2, // two pairs
-            (2, _) => 1, // pair
-            (_, _) => 0, // high card
+            (5, _) => Kind::FiveOfAKind,
+            (4, _) => Kind::FourOfAKind,
+            (3, 2) => Kind::FullHouse,
+            (3, _) => Kind::ThreeOfAKind,
+            (2, 2) => Kind::TwoPairs,
+            (2, _) => Kind::Pair,
+            (_, _) => Kind::HighCard,
         }
     }
 }
@@ -39,7 +49,7 @@ impl PartialOrd for Hand {
 
 impl Ord for Hand {
     fn cmp(&self, other: &Self) -> Ordering {
-        (self.kind(), self.cards).cmp(&(other.kind(), other.cards))
+        (self.kind() as isize, self.cards).cmp(&(other.kind() as isize, other.cards))
     }
 }
 
