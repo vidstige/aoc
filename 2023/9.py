@@ -11,12 +11,21 @@ def diff(values: List[int]) -> List[int]:
     return [second - first for first, second in zip(values, values[1:])]
 
 
-def extrapolate(values: List[int]) -> int:
+def forward(values: List[int]) -> int:
     assert values, "Can't extrapolate empty values"
     if all(v == 0 for v in values):
         return 0
-    return values[-1] + extrapolate(diff(values))
+    return values[-1] + forward(diff(values))
 
-total = sum(extrapolate(history) for history in parse(sys.stdin))
+history = list(parse(sys.stdin))
+total = sum(forward(values) for values in history)
 print(total)
-    
+
+
+def backwards(values: List[int]) -> int:
+    assert values, "Can't extrapolate empty values"
+    if all(v == 0 for v in values):
+        return 0
+    return values[0] - backwards(diff(values))
+
+print(sum(backwards(history) for history in history))
