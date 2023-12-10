@@ -74,15 +74,21 @@ def format_pipe(pipe: Optional[Pipe]) -> str:
     }.get(pipe, '·')
 
 
-def print_pipes(grid: Grid) -> None:
+def print_pipes(grid: Grid, mask: Dict[Position, str] = {}) -> None:
     xs = [x for x, _ in grid]
-    ys = [x for x, _ in grid]
+    ys = [y for _, y in grid]
     x0, y0 = min(xs), min(ys)
     x1, y1 = max(xs), max(ys)
     for y in range(y0, y1 + 1):
         for x in range(x0, x1 + 1):
-            pipe = grid.get((x, y))
-            print(format_pipe(pipe), end='')
+            p = x, y
+            overwrite = mask.get(p)
+            if overwrite:
+                c = overwrite
+            else:
+                pipe = grid.get(p)
+                c = format_pipe(pipe)
+            print(c, end='')
         print()
 
 
@@ -111,11 +117,41 @@ def follow(grid: Grid, start: Position) -> Iterable[Position]:
         yield p
 
 
+def is_horizontal(pipe: Pipe) -> bool:
+    return pipe == (Direction.LEFT, Direction.RIGHT)
+
+
+def interior(grid: Grid, start: Position) -> Iterable[Position]:
+    """Computes area enclosed by pipe starting at 'start'"""
+    outline = set(follow(grid, start))
+    # remove horizontal pipes
+    horizontal = {p for p in outline if is_horizontal(grid[p])}
+    cuts = outline - horizontal
+    # bounding box
+    xs = [x for x, _ in grid]
+    ys = [x for x, _ in grid]
+    x0, y0 = min(xs), min(ys)
+    x1, y1 = max(xs), max(ys)
+    # scan each line
+    for y in range(y0, y1 + 1):
+        # keep track of starts of both UP and DOWN pipes
+        inside: Dict[Direction, bool] = {Direction.UP: False, Direction.DOWN: False}
+        for x in range(x0, x1 + 1):
+            p  = x, y
+            if p in outline:
+                for direction in inside:
+                    if direction in grid[p]:
+                        inside[direction] = not inside[direction]
+            if all(inside.values()) and p not in outline:
+                yield p
+
 
 start, grid = parse(sys.stdin)
 fill_start(grid, start)
-print(start)
-print_pipes(grid)
-path = list(follow(grid, start))
-print(len(path) // 2)
 
+#path = list(follow(grid, start))
+#print(len(path) // 2)
+
+pipe_interor = list(interior(grid, start))
+print_pipes(grid, mask={p: 'I' for p in pipe_interor})
+print(len(pipe_interor))
