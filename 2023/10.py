@@ -74,11 +74,14 @@ def format_pipe(pipe: Optional[Pipe]) -> str:
     }.get(pipe, '·')
 
 
-def print_pipes(grid: Grid, mask: Dict[Position, str] = {}) -> None:
+def bbox(grid: Grid) -> Tuple[Position, Position]:
     xs = [x for x, _ in grid]
     ys = [y for _, y in grid]
-    x0, y0 = min(xs), min(ys)
-    x1, y1 = max(xs), max(ys)
+    return (min(xs), min(ys)), (max(xs), max(ys))
+
+
+def print_pipes(grid: Grid, mask: Dict[Position, str] = {}) -> None:
+    (x0, y0), (x1, y1) = bbox(grid)
     for y in range(y0, y1 + 1):
         for x in range(x0, x1 + 1):
             p = x, y
@@ -124,18 +127,12 @@ def is_horizontal(pipe: Pipe) -> bool:
 def interior(grid: Grid, start: Position) -> Iterable[Position]:
     """Computes area enclosed by pipe starting at 'start'"""
     outline = set(follow(grid, start))
-    # remove horizontal pipes
-    horizontal = {p for p in outline if is_horizontal(grid[p])}
-    cuts = outline - horizontal
     # bounding box
-    xs = [x for x, _ in grid]
-    ys = [x for x, _ in grid]
-    x0, y0 = min(xs), min(ys)
-    x1, y1 = max(xs), max(ys)
+    (x0, y0), (x1, y1) = bbox(grid)
     # scan each line
     for y in range(y0, y1 + 1):
         # keep track of starts of both UP and DOWN pipes
-        inside: Dict[Direction, bool] = {Direction.UP: False, Direction.DOWN: False}
+        inside = {Direction.UP: False, Direction.DOWN: False}
         for x in range(x0, x1 + 1):
             p  = x, y
             if p in outline:
@@ -153,5 +150,5 @@ path = list(follow(grid, start))
 print('half pipe length:', len(path) // 2)
 
 pipe_interor = list(interior(grid, start))
-#print_pipes(grid, mask={p: 'I' for p in pipe_interor})
+print_pipes(grid, mask={p: 'I' for p in pipe_interor})
 print('pipe interor area:', len(pipe_interor))
