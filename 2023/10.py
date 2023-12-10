@@ -149,9 +149,9 @@ def interior(grid: Grid, start: Position) -> Iterable[Position]:
 start, grid = parse(sys.stdin)
 fill_start(grid, start)
 
-#path = list(follow(grid, start))
-#print(len(path) // 2)
+path = list(follow(grid, start))
+print('half pipe length:', len(path) // 2)
 
 pipe_interor = list(interior(grid, start))
-print_pipes(grid, mask={p: 'I' for p in pipe_interor})
-print(len(pipe_interor))
+#print_pipes(grid, mask={p: 'I' for p in pipe_interor})
+print('pipe interor area:', len(pipe_interor))
