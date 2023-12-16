@@ -68,9 +68,8 @@ print(energized(grid, (0, 0), RIGHT))
 
 # second star
 def search(grid: Grid) -> Iterable[int]:
-    xmin, xmax = min(x for x, _ in grid), max(x for x, _ in grid)
-    ymin, ymax = min(y for _, y in grid), max(y for _, y in grid)
-    print(min(grid), max(grid))
+    xmin, ymin = min(grid)
+    xmax, ymax = max(grid)
     for x in range(xmin, xmax + 1):
         yield energized(grid, (x, ymin), DOWN)
         yield energized(grid, (x, ymax), UP)
