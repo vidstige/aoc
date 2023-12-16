@@ -34,7 +34,6 @@ def spread(grid: Grid, start: Position, direction: Tuple[int, int]) -> Iterable[
             continue
         visited.add((p, d))
         yield p
-        #print(grid[p])
         if grid[p] == '.':
             # empty space, just keep moving
             pass
@@ -57,10 +56,26 @@ def spread(grid: Grid, start: Position, direction: Tuple[int, int]) -> Iterable[
             d = -dy, -dx
         stack.append((step(p, d), d))
 
+def energized(grid: Grid, start: Position, direction: Tuple[int, int]) -> int:
+    positions = set()
+    for p in spread(grid, start, direction):
+        positions.add(p)
+    return len(positions)
 
 grid = parse(sys.stdin)
-energized = set()
-for p in spread(grid, (0, 0), RIGHT):
-    energized.add(p)
+# first star
+print(energized(grid, (0, 0), RIGHT))
 
-print(len(energized))
+# second star
+def search(grid: Grid) -> Iterable[int]:
+    xmin, xmax = min(x for x, _ in grid), max(x for x, _ in grid)
+    ymin, ymax = min(y for _, y in grid), max(y for _, y in grid)
+    print(min(grid), max(grid))
+    for x in range(xmin, xmax + 1):
+        yield energized(grid, (x, ymin), DOWN)
+        yield energized(grid, (x, ymax), UP)
+    for y in range(ymin, ymax + 1):
+        yield energized(grid, (xmin, y), RIGHT)
+        yield energized(grid, (xmax, y), LEFT)
+
+print(max(search(grid)))
