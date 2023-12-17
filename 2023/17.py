@@ -1,7 +1,7 @@
 from collections import deque
 import heapq
 import sys
-from typing import Dict, Iterable, List, Sequence, TextIO, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, TextIO, Tuple
 
 Position = Tuple[int, int]
 Grid = Dict[Position, int]
@@ -82,6 +82,19 @@ def print_grid(grid: Grid, trail: Sequence[Position] = ()) -> None:
         print()
         
 
+def trail_for(p: Position, previous: Dict[Position, Position], n: Optional[int] = None) -> List[Tuple[int, int]]:
+    d = []
+    i = 0
+    while p is not None and (n is None or i < n):
+        d.append(p)
+        i += 1
+        p = previous.get(p)
+    return d
+
+def deltas(trail: Sequence[Position]) -> Iterable[Tuple[int, int]]:
+    for a, b in zip(trail, trail[1:]):
+        yield sub(a, b)
+
 def dijkstra(grid: Grid, start: Position, end: Position):
     costs = {start: 0}  
     queue = [(0, start)]
@@ -89,25 +102,25 @@ def dijkstra(grid: Grid, start: Position, end: Position):
     while queue:
         cost, p = heapq.heappop(queue)
         if p == end:
-            print('ok. finding shortest path')
-            path = []
-            while p is not None:
-                path.append(p)
-                p = previous.get(p)
-            path.reverse()
-            return path
+            return trail_for(p, previous)
         # skip if we already found something better
         if cost > costs.get(p):
             continue
+        neighbor_cost = cost + grid[p]
+        ds = list(deltas(trail_for(p, previous, 4)))
         for direction in DIRECTIONS:
             neighbor = add(p, direction)
             if neighbor not in grid:
                 continue
-            neighbor_cost = cost + grid[p]
+            # avoid path with 4 straight deltas
+            if len(ds) == 3 and all(d == direction for d in ds):
+                continue
+
             if neighbor not in costs or neighbor_cost < costs[neighbor]:
                 heapq.heappush(queue, (neighbor_cost, neighbor))
                 costs[neighbor] = neighbor_cost
                 previous[neighbor] = p
+    raise ValueError(f"No path from {start} to {end}")
 
 grid = parse(sys.stdin)
 start = min(grid)
@@ -116,5 +129,5 @@ end = max(grid)
 
 trail = dijkstra(grid, start, end)
 print_grid(grid, trail=trail)
-#print(heatloss(grid, trail=history))
+print(heatloss(grid, trail=trail))
 
