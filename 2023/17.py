@@ -85,11 +85,17 @@ def print_grid(grid: Grid, trail: Sequence[Position] = ()) -> None:
 def dijkstra(grid: Grid, start: Position, end: Position):
     costs = {start: 0}  
     queue = [(0, start)]
+    previous: Dict[Position, Position] = {}  # keep track of shortest path
     while queue:
         cost, p = heapq.heappop(queue)
         if p == end:
-            print('ok')
-            return cost
+            print('ok. finding shortest path')
+            path = []
+            while p is not None:
+                path.append(p)
+                p = previous.get(p)
+            path.reverse()
+            return path
         # skip if we already found something better
         if cost > costs.get(p):
             continue
@@ -101,12 +107,14 @@ def dijkstra(grid: Grid, start: Position, end: Position):
             if neighbor not in costs or neighbor_cost < costs[neighbor]:
                 heapq.heappush(queue, (neighbor_cost, neighbor))
                 costs[neighbor] = neighbor_cost
+                previous[neighbor] = p
 
 grid = parse(sys.stdin)
 start = min(grid)
 end = max(grid)
 #history = search(grid, start, end)
-print_grid(grid)
-print(dijkstra(grid, start, end))
+
+trail = dijkstra(grid, start, end)
+print_grid(grid, trail=trail)
 #print(heatloss(grid, trail=history))
 
