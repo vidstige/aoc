@@ -19,7 +19,11 @@ def first_star(instructions: Sequence[Tuple[str, int, str]]) -> Sequence[Tuple[s
         yield direction, count
 
 def second_star(instructions: Sequence[Tuple[str, int, str]]) -> Sequence[Tuple[str, int]]:
-    raise NotImplemented()
+    DIRECTIONS = 'RDLU'
+    for _, _, color in instructions:
+        hex_distance = color[1:6]
+        direction_code = color[6]
+        yield DIRECTIONS[int(direction_code)], int(hex_distance, 16), 
 
 HLine = Tuple[range, int]
 VLine = Tuple[int, range]
@@ -142,6 +146,9 @@ def print_grid(grid: Iterable[Position]) -> None:
             #print('#' if (x, y) in grid else '.', end='')
         print()
 
+def area(boxes: Iterable[Tuple[range, range]]) -> int:
+    return sum((len(xr) + 1) * len(yr) for xr, yr in boxes)
+
 # test range set operations
 # a: ------      -----      ----  --       --     --------
 # b: --  --      ---                  --     --      ---  
@@ -158,8 +165,11 @@ c = [range(6, 12), range(18, 23), range(29, 33), range(35, 37), range(39, 41), r
 assert or_rangesets(a, b) == c
 
 instructions = list(parse(sys.stdin))
-boxes = fill(first_star(instructions))
+boxes = list(fill(first_star(instructions)))
 grid = list(all_positions(boxes))
 assert len(grid) == len(set(grid)), "duplicates!"
 #print_grid(grid)
-print(len(grid))
+print(len(grid), area(boxes))
+
+boxes = fill(second_star(instructions))
+print(area(boxes))
