@@ -1,9 +1,8 @@
 use std::collections::{HashMap, VecDeque};
 use std::fmt::format;
 use std::io::{self, BufRead};
+use std::iter;
 use std::ops::BitXorAssign;
-use std::process::Output;
-use std::{iter, mem};
 
 enum Module {
     Forward,
@@ -95,13 +94,14 @@ const HIGH: bool = true;
 
 fn push(inputs: &Vec<Vec<usize>>, outputs: &Vec<Vec<usize>>, modules: &mut Vec<Module>, start: (usize, usize, bool), names: &Vec<String>) -> [usize; 2] {
     let mut queue = VecDeque::new();
-    // send low pulse to start
+    // send start pulse
     queue.push_back(start);
     let mut counts = [0; 2];
     while let Some((from, to, pulse)) = queue.pop_front() {
         // count the pulse
         counts[pulse as usize] += 1;
-        println!("pulse {} from {} to {}", pulse, names[from], names[to]);
+        //println!("pulse {} from {} to {}", pulse, names[from], names[to]);
+        println!("{} -{}-> {}", names[from], if pulse { "high" } else { "low" }, names[to]);
         match &mut modules[to] {
             Module::Forward => for output in &outputs[to] {
                 queue.push_back((to, *output, pulse));
@@ -120,7 +120,7 @@ fn push(inputs: &Vec<Vec<usize>>, outputs: &Vec<Vec<usize>>, modules: &mut Vec<M
                 let input = inputs[to].iter().position(|input| input == &from).unwrap();
                 // flip memory for input
                 memory[input].bitxor_assign(true);
-                let pulse = !memory.iter().all(|b| *b);
+                let pulse = !memory.iter().all(|p| *p == HIGH);
                 for output in &outputs[to] {
                     queue.push_back((to, *output, pulse));
                 }
@@ -138,7 +138,7 @@ fn main() {
     let button = lookup(&"button".to_string(), &names).unwrap();
     let broadcaster = lookup(&"broadcaster".to_string(), &names).unwrap();
     let mut total = [0; 2];
-    for _ in 0..1000 {
+    for _ in 0..4 {
         let counters = push(&inputs, &outputs, &mut modules, (button, broadcaster, LOW), &names);
         total[0] += counters[0];
         total[1] += counters[1];
