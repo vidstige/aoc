@@ -65,7 +65,7 @@ def toggle(grid: Grid, p: Tuple[int, int]) -> None:
     else:
         grid.add(p)
 
-def find_with_smudge(grid: Grid, exclude: int) -> Optional[int]:
+def find_with_smudge(grid: Grid, exclude: int) -> Optional[Tuple[int, Tuple[int, int]]]:
     xmin, xmax = min(x for x, _ in grid), max(x for x, _ in grid) + 1
     ymin, ymax = min(y for _, y in grid), max(y for _, y in grid) + 1
     for y in range(ymin, ymax):
@@ -74,7 +74,7 @@ def find_with_smudge(grid: Grid, exclude: int) -> Optional[int]:
             mirror = find_mirror(grid, (exclude,))
             toggle(grid, (x, y))  # undo
             if mirror is not None:
-                return mirror
+                return mirror, (x, y)
     return None
 
 grids = list(parse())
@@ -93,11 +93,12 @@ for i, grid in enumerate(grids):
     xs = find_with_smudge(grid, exclude=xr)
     ys = find_with_smudge(transpose(grid), exclude=yr)
     if (xs is None) == (ys is None):
-        print('double mirror', i)
+        print('double mirror', i, xs, ys)
+        print_grid(grid)
     if ys is not None:
-        second += 100 * ys
+        second += 100 * ys[0]
     elif xs is not None:
-        second += xs
+        second += xs[0]
 
 print(first)
 print(second)
