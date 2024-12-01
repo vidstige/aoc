@@ -47,8 +47,19 @@ def search(conditions: str, index: int, records: List[int], ri: int, r: int) -> 
     working = search(with_condition(conditions, '.', index), index, records, ri, r)
     return working + damaged
 
-#for conditions, records in parse(sys.stdin):
-#    #print(conditions, records)
-#    print(search(conditions, 0, records, 0, 0))
+def wrapper(row: Tuple[str, List[int]]) -> int:
+    print('.')
+    conditions, records = row
+    return search(conditions, 0, records, 0, 0)
 
-print(sum(search(conditions, 0, records, 0, 0) for conditions, records in parse(sys.stdin)))
+def unfold(row: Tuple[str, List[int]], n: int = 5) -> Tuple[str, List[int]]:
+    conditions, records = row
+    return '?'.join([conditions] * n), records * n
+
+data = list(parse(sys.stdin))
+
+# first star
+print(sum(wrapper(row) for row in data))
+
+# second star
+print(sum(wrapper(unfold(row)) for row in data))

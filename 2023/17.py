@@ -43,13 +43,12 @@ def is_legal(history: Tuple) -> bool:
         previous = delta
     return True
 
-
 def search(grid: Grid, start: Position, end: Position, n: int = 3) -> Sequence[Position]:
     # keep of best heat loss per position
     best = {}
-    queue = deque([(end, 0, tuple())])
+    queue = deque([(end, (0, 0), tuple())])
     while queue:
-        p, heatloss, history = queue.popleft()
+        p, cost, history = queue.popleft()
         if p not in grid:
             continue
         if not is_legal(history):
@@ -57,12 +56,14 @@ def search(grid: Grid, start: Position, end: Position, n: int = 3) -> Sequence[P
         if p == start:
             return list(reversed(history))
         b = best.get(p)
-        if b is not None and b < heatloss:
+        if b is not None and b < cost:
             # we already found a better way
             continue
-        best[p] = heatloss
+        best[p] = cost
         for d in DIRECTIONS:
-            queue.append((add(p, d), heatloss + grid[p], history + (p,)))
+            straight, heatloss = cost
+
+            queue.append((add(p, d), (straight, heatloss + grid[p]), history + (p,)))
     raise ValueError(f'No path from {start} to {end}')
 
 
