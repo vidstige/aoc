@@ -48,30 +48,29 @@ def add(a: Position, b: Position) -> Position:
     return ax + bx, ay + by
 
 
-def find_antinodes(nodes: list[Position], limit=None):
+def find_antinodes(nodes: list[Position], octaves=None):
     for a, b in combinations(nodes, r=2):
-        p = a
+        p, i = a, 0
         while p in bbox:
-            yield p
-            p = add(p, sub(a, b))
-        p = b
+            if octaves is None or i in octaves:
+                yield p
+            p, i = add(p, sub(a, b)), i + 1
+        p, i = b, 0
         while p in bbox:
-            yield p
-            p = add(p, sub(b, a))
+            if octaves is None or i in octaves:
+                yield p
+            p, i = add(p, sub(b, a)), i + 1
 
 
 grid, bbox = parse(sys.stdin)
-antinodes = set()
+antinodes_0, antinodes_1 = set(), set()
 for frequency, nodes in grid.items():
-    for antinode in find_antinodes(nodes, limit=1):
-        antinodes.add(antinode)
+    for antinode in find_antinodes(nodes, octaves=[1]):
+        antinodes_0.add(antinode)
 
-        # first star
-        #antinode = add(a, sub(a, b))
-        #if antinode in bbox:
-        #    antinodes.add(antinode)
-        #antinode = add(b, sub(b, a))
-        #if antinode in bbox:
-        #    antinodes.add(antinode)
+    for antinode in find_antinodes(nodes):
+        antinodes_1.add(antinode)
 
-print(len(antinodes))
+
+print(len(antinodes_0))
+print(len(antinodes_1))
