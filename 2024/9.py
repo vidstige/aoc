@@ -1,18 +1,22 @@
 import sys
 import typing
 
-def parse(f: typing.TextIO):
+Disk = list[tuple[int | None, int]]
+
+def parse(f: typing.TextIO) -> Disk:
     line = f.readline().rstrip()
     disk = []
     for i, c in enumerate(line):
-        if i % 2 == 0:
-            file_id = i // 2
-            size = int(c)
-            disk.extend([file_id] * size)
-        else:
-            size = int(c)
-            disk.extend([None] * size)
+        file_id = i // 2 if i % 2 == 0 else None
+        size = int(c)
+        disk.append((file_id, size))
     return disk
+
+def expand(disk: Disk) -> list[int | None]:
+    expanded = []
+    for file_id, size in disk:
+        expanded.extend([file_id] * size)
+    return expanded
 
 def defrag(disk: list[int | None]):
     end = len(disk) - 1
@@ -23,17 +27,16 @@ def defrag(disk: list[int | None]):
         start = disk.index(None, start)  # find first free
         end -= 1
 
-
 def checksum(disk: list[int | None]) -> int:
     return sum(file_id * position for position, file_id in enumerate(disk) if file_id)
-
 
 def format_disk(disk: list[int | None]) -> str:
     return ''.join(str(sector) if sector is not None else '.' for sector in disk)
 
 
 disk = parse(sys.stdin)
-print(format_disk(disk))
-defrag(disk)
-print(format_disk(disk))
-print(checksum(disk))
+edisk = expand(disk)
+print(format_disk(edisk))
+defrag(edisk)
+print(format_disk(edisk))
+print(checksum(edisk))
