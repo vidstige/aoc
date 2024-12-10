@@ -21,19 +21,22 @@ NEIGHBOURS = [
 ]
 
 def search(grid: Grid, start: Position):
-    nodes = [start]
+    nodes = [(start, tuple())]
     while nodes:
-        node = nodes.pop()
+        node, path = nodes.pop()
         if grid[node] == 9:
-            yield node
+            yield path
         x, y = node
-        for dx, dy in NEIGHBOURS:
-            if grid[(x, y)] + 1 == grid.get((x + dx, y + dy)):
-                nodes.append((x + dx, y + dy))
-        
+        neighbours = [(x + dx, y + dy) for dx, dy in NEIGHBOURS if grid[(x, y)] + 1 == grid.get((x + dx, y + dy))]
+        for neighbour in neighbours:
+            nodes.append((neighbour, path + (neighbour,)))
+    return total
+
+
 grid = parse(sys.stdin)
 total = 0
 for trailhead in find_trailheads(grid):
-    total += len(set(search(grid, trailhead)))
+    paths = set(search(grid, trailhead))
+    total += len(paths)
 
 print(total)
