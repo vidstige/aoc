@@ -39,16 +39,12 @@ def can_push(grid: Grid, p: Position, delta: Position) -> bool:
         return can_push(grid, n, delta)
     # left side of a box
     if grid[n] == '[':
-        if dx == 0:  # if up/down push
-            return can_push(grid, n, delta) and can_push(grid, (x + dx + 1, y + dy), delta)
-        else: # left/right push
-            return can_push(grid, n, delta)
+        # skip right side if up/down push
+        return can_push(grid, n, delta) and (dx == 0 or can_push(grid, (x + dx + 1, y + dy), delta))
     # right side of box
     if grid[n] == ']':
-        if dx == 0:
-            return can_push(grid, n, delta) and can_push(grid, (x + dx - 1, y + dy), delta)
-        else:
-            return can_push(grid, n, delta)
+        # skip left side if up/down push
+        return can_push(grid, n, delta) and (dx == 0 or can_push(grid, (x + dx - 1, y + dy), delta))
     assert grid[n] in '.@', grid[n]
     return True
 
