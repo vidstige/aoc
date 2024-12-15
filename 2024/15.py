@@ -1,5 +1,5 @@
 import sys
-from typing import TextIO
+from typing import Iterable, TextIO
 
 Position = tuple[int, int]
 Grid = dict[Position, str]
@@ -84,9 +84,12 @@ def print_grid(grid: Grid) -> None:
             print(grid[(x, y)], end='')
         print()
 
-def gps(grid: Grid) -> int:
-    boxes = (p for p, c in grid.items() if c in 'O[')
-    return sum(x + 100 * y for x, y in boxes)
+def boxes(grid: Grid) -> Iterable[Position]:
+    return (p for p, c in grid.items() if c in 'O[')
+
+def gps(position: Position) -> int:
+    x, y = position
+    return x + 100 * y
 
 def widen(grid: Grid, robot: Position) -> tuple[Grid, Position]:
     WIDE = {
@@ -107,10 +110,10 @@ grid, robot, instructions = parse(sys.stdin)
 # part 1
 execute(grid, robot, instructions)
 print_grid(grid)
-print(gps(grid))
+print(sum(gps(p) for p in boxes(grid)))
 
 # part 2
 wide, robot = widen(grid, robot)
 execute(wide, robot, instructions)
 print_grid(wide)
-print(gps(wide))
+print(sum(gps(p) for p in boxes(wide)))
