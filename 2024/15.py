@@ -28,26 +28,53 @@ DIRECTIONS = {
     '<': (-1, 0),
 }
 
-def push(grid: Grid, p: Position, delta: Position) -> Position:
+def can_push(grid: Grid, p: Position, delta: Position) -> bool:
     x, y = p
     dx, dy = delta
     n = x + dx, y + dy
     # wall -> stop
     if grid[n] == '#':
-        return p
-    # box -> keep going
-    if grid[n] == 'O':
+        return False
+    # left side of a box
+    if grid[n] == '[':
+        if dx == 0:  # if up/down push
+            return can_push(grid, n, delta) and can_push(grid, (x + dx + 1, y + dy), delta)
+        else: # left/right push
+            return can_push(grid, n, delta)
+    # right side of box
+    if grid[n] == ']':
+        if dx == 0:
+            return can_push(grid, n, delta) and can_push(grid, (x + dx - 1, y + dy), delta)
+        else:
+            return can_push(grid, n, delta)
+    assert grid[n] == '.'
+    return True
+
+
+def push(grid: Grid, p: Position, delta: Position) -> Position:
+    x, y = p
+    dx, dy = delta
+    n = x + dx, y + dy
+    assert grid[n] != '#'
+    # left side of a box
+    if grid[n] == '[':
         push(grid, n, delta)
-    # now, if there is free space if move robot/box in there
-    if grid[n] == '.':
-        grid[p], grid[n] = grid[n], grid[p]
-        return n
-    return p
+        if dx == 0: # up/down push. Also push other side
+            push(grid, (x + dx + 1, y + dy), delta)
+    # right side of box
+    if grid[n] == ']':
+        push(grid, n, delta)
+        if dx == 0: # up/down push. Also push other side
+            push(grid, (x + dx - 1, y + dy), delta)
+    # either way, swap items here
+    grid[p], grid[n] = grid[n], grid[p]
+    return n
 
 def execute(grid: Grid, robot: Position, instructions: str):
     for instruction in instructions:
         delta = DIRECTIONS[instruction]
-        robot = push(grid, robot, delta)
+        if can_push(grid, robot, delta):
+            robot = push(grid, robot, delta)
 
 def print_grid(grid: Grid) -> None:
     xmin, xmax = min(x for x, _ in grid), max(x for x, _ in grid) + 1
@@ -58,11 +85,26 @@ def print_grid(grid: Grid) -> None:
         print()
 
 def gps(grid: Grid) -> int:
-    boxes = (p for p, c in grid.items() if c == 'O')
+    boxes = (p for p, c in grid.items() if c in 'O[')
     return sum(x + 100 * y for x, y in boxes)
+
+def widen(grid: Grid, robot: Position) -> tuple[Grid, Position]:
+    WIDE = {
+        '.': '..',
+        'O': '[]',
+        '@': '@.',
+        '#': '##',
+    }
+    tmp = {}
+    for (x, y), c in grid.items():
+        for dx, cc in enumerate(WIDE[c]):
+            tmp[(2 * x + dx, y)] = cc
+    x, y = robot
+    return tmp, (2*x, y)
 
 grid, robot, instructions = parse(sys.stdin)
 
-execute(grid, robot, instructions)
-print_grid(grid)
-print(gps(grid))
+wide, robot = widen(grid, robot)
+execute(wide, robot, instructions)
+print_grid(wide)
+print(gps(wide))
