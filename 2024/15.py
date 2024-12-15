@@ -35,6 +35,8 @@ def can_push(grid: Grid, p: Position, delta: Position) -> bool:
     # wall -> stop
     if grid[n] == '#':
         return False
+    if grid[n] == 'O':
+        return can_push(grid, n, delta)
     # left side of a box
     if grid[n] == '[':
         if dx == 0:  # if up/down push
@@ -47,7 +49,7 @@ def can_push(grid: Grid, p: Position, delta: Position) -> bool:
             return can_push(grid, n, delta) and can_push(grid, (x + dx - 1, y + dy), delta)
         else:
             return can_push(grid, n, delta)
-    assert grid[n] == '.'
+    assert grid[n] in '.@', grid[n]
     return True
 
 
@@ -56,6 +58,8 @@ def push(grid: Grid, p: Position, delta: Position) -> Position:
     dx, dy = delta
     n = x + dx, y + dy
     assert grid[n] != '#'
+    if grid[n] == 'O':
+        push(grid, n, delta)
     # left side of a box
     if grid[n] == '[':
         push(grid, n, delta)
@@ -104,6 +108,12 @@ def widen(grid: Grid, robot: Position) -> tuple[Grid, Position]:
 
 grid, robot, instructions = parse(sys.stdin)
 
+# part 1
+execute(grid, robot, instructions)
+print_grid(grid)
+print(gps(grid))
+
+# part 2
 wide, robot = widen(grid, robot)
 execute(wide, robot, instructions)
 print_grid(wide)
