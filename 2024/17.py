@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, astuple, replace as copy
 from itertools import count
 import re
 import sys
@@ -66,25 +66,38 @@ OPCODES = [
     bdv,
     cdv,
 ]
-def run(program: bytes, registers: Registers, ip: int = 0) -> bytes:
+def run(
+    program: bytes,
+    registers: Registers,
+    ip: int = 0,
+    bail: bool = False,
+) -> bytes | None:
     output = bytearray()
     while ip < len(program):
+        if bail and not program.startswith(output):
+            return None  # abort
+        #key = (astuple(registers), ip)
+        #if key in cache:
+        #    return cache[key]
         opcode = program[ip]
         operand = program[ip+1]
         #print(f"{ip:03d} {OPCODES[opcode].__name__} {operand}")
         jmp = OPCODES[opcode](operand, registers, output)
         ip = ip + 2 if jmp is None else jmp
+    #cache[(astuple(registers), ip)] = bytes(output)
     return bytes(output)
 
 program, registers = parse(sys.stdin)
-output = run(program, registers)
+output = run(program, copy(registers))
+# 1
 print(','.join(str(o) for o in output))
-#for a in count():
-#    if a % 1000 == 0:
-#        print(a)
-#    r = dict(registers)
-#    r.a = a
-#    run(program, r)
-#    if bytes(registers['output']) == program:
-#        print(a)
-#        break
+
+for a in count():
+    if a % 100000 == 0:
+        print(a)
+    r = copy(registers)
+    r.a = a
+    output = run(program, r, bail=True)
+    if output == program:
+        print(a)
+        break
