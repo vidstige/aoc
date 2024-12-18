@@ -1,3 +1,4 @@
+from collections import deque
 import itertools
 import sys
 from typing import Iterable, TextIO
@@ -15,11 +16,11 @@ NEIGHBOURS = [
     (0, 1),
     (-1, 0),
 ]
-def bfs(grid: set[Position], start: Position, end: Position):
-    nodes = [(start, 0)]
+def bfs(grid: set[Position], start: Position, end: Position) -> int | None:
+    nodes = deque([(start, 0)])
     visited = {start}
     while nodes:
-        node, cost = nodes.pop(0)
+        node, cost = nodes.pop()
         if node == end:
             return cost
         x, y = node
@@ -27,11 +28,25 @@ def bfs(grid: set[Position], start: Position, end: Position):
             neighbour = (x + dx, y + dy)
             if neighbour in grid and neighbour not in visited:
                 visited.add(neighbour)
-                nodes.append((neighbour, cost + 1))
+                nodes.appendleft((neighbour, cost + 1))
 
-full_grid = set(itertools.product(range(70+1), range(70+1)))
+size, n = 70, 1024
+#size, n = 6, 12
+start = 0, 0
+end = size, size
 
-corrupted = parse(sys.stdin)
-grid = full_grid - set(itertools.islice(corrupted, 1024))
-m = bfs(grid, (0, 0), (70, 70))
-print(m)
+full_grid = set(itertools.product(range(size+1), range(size+1)))
+corrupted = list(parse(sys.stdin))
+grid = full_grid - set(corrupted[:n])
+
+# silver
+print(bfs(grid, start, end))
+
+# gold
+grid = full_grid
+for p in corrupted:
+    grid.remove(p)
+    cost = bfs(grid, start, end)
+    if cost is None:
+        print(p)
+        break
