@@ -17,4 +17,7 @@ def search(pattern: str) -> int:
     return sum(search(pattern[len(towel):]) for towel in towels if pattern.startswith(towel))
 
 
+# silver
 print(sum(1 for pattern in patterns if search(pattern) > 0))
+# gold
+print(sum(search(pattern)  for pattern in patterns))
